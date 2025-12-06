@@ -1,0 +1,785 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Job, Candidate } from '../types';
+import { analyzeResume } from '../services/geminiService';
+import AnalysisCard from '../components/AnalysisCard';
+import { useAppContext } from '../contexts/AppContext';
+import { Search, Users, Loader2, Filter, ChevronRight, ArrowUpDown, History, TrendingUp, TrendingDown, Minus, Sparkles, Plus, Save, X, UploadCloud, FileText, Mail, File } from 'lucide-react';
+
+const RecruiterDashboard: React.FC = () => {
+  const { jobs, addJob, applications } = useAppContext();
+  
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // View States
+  const [analysisView, setAnalysisView] = useState<Candidate | null>(null);
+  const [modalCandidate, setModalCandidate] = useState<Candidate | null>(null);
+  const [isCreatingJob, setIsCreatingJob] = useState(false);
+  const [isAddingCandidate, setIsAddingCandidate] = useState(false);
+
+  // Form state for new job
+  const [newJobData, setNewJobData] = useState<Partial<Job>>({
+    title: '',
+    department: '',
+    location: '',
+    type: 'Presencial',
+    description: '',
+    requirements: []
+  });
+  const [requirementsInput, setRequirementsInput] = useState('');
+
+  // Form state for manual candidate
+  const [manualCandidate, setManualCandidate] = useState({
+    name: '',
+    email: '',
+    resumeText: '',
+    fileName: ''
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Effect to load real applications when selected job changes
+  useEffect(() => {
+    if (selectedJob) {
+      // Filter real applications for this job
+      const realApps = applications.filter(app => app.jobId === selectedJob.id);
+      
+      // If we have existing candidates (simulated), merge them. 
+      setCandidates(prev => {
+        const combined = [...realApps, ...prev.filter(p => !realApps.find(r => r.id === p.id))];
+        return combined.sort((a, b) => (b.analysis?.overallScore || 0) - (a.analysis?.overallScore || 0));
+      });
+    }
+  }, [selectedJob, applications]);
+
+  const handleCreateJob = () => {
+    if (!newJobData.title || !newJobData.description) return;
+
+    const newJob: Job = {
+      id: Date.now().toString(),
+      title: newJobData.title || 'Nova Vaga',
+      department: newJobData.department || 'Geral',
+      location: newJobData.location || 'Remoto',
+      type: (newJobData.type as 'Presencial' | 'Remoto' | 'Híbrido') || 'Remoto',
+      description: newJobData.description || '',
+      requirements: requirementsInput.split('\n').filter(r => r.trim() !== '')
+    };
+
+    addJob(newJob);
+    setIsCreatingJob(false);
+    setSelectedJob(newJob);
+    setCandidates([]);
+    
+    // Reset form
+    setNewJobData({ title: '', department: '', location: '', type: 'Presencial', description: '', requirements: [] });
+    setRequirementsInput('');
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setManualCandidate(prev => ({ ...prev, fileName: file.name }));
+    setLoading(true);
+
+    setTimeout(() => {
+      if (file.type === "text/plain") {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setManualCandidate(prev => ({ ...prev, resumeText: e.target?.result as string }));
+          setLoading(false);
+        };
+        reader.readAsText(file);
+      } else {
+        setManualCandidate(prev => ({ 
+          ...prev, 
+          resumeText: `[CONTEÚDO EXTRAÍDO DO ARQUIVO: ${file.name}]\n\nCandidato: ${manualCandidate.name || 'Desconhecido'}\nExperiência: Profissional com histórico sólido na área.\n...(Simulação de extração de texto via OCR)...` 
+        }));
+        setLoading(false);
+      }
+    }, 1000);
+  };
+
+  const handleManualCandidateSubmit = async () => {
+    if (!selectedJob || !manualCandidate.resumeText) return;
+
+    setLoading(true);
+    try {
+      const analysis = await analyzeResume(selectedJob, manualCandidate.resumeText);
+      const newCandidate: Candidate = {
+        id: `m${Date.now()}`,
+        name: manualCandidate.name,
+        email: manualCandidate.email,
+        fileName: manualCandidate.fileName,
+        resumeText: manualCandidate.resumeText,
+        analysis,
+        jobId: selectedJob.id
+      };
+
+      setCandidates(prev => {
+        const updated = [...prev, newCandidate];
+        return updated.sort((a, b) => (b.analysis?.overallScore || 0) - (a.analysis?.overallScore || 0));
+      });
+      setIsAddingCandidate(false);
+      setManualCandidate({ name: '', email: '', resumeText: '', fileName: '' });
+    } catch (error) {
+      alert("Erro na análise. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const simulateBatchProcessing = async () => {
+    if (!selectedJob) return;
+    setLoading(true);
+    
+    const realApps = applications.filter(app => app.jobId === selectedJob.id);
+
+    const rawCandidates: Candidate[] = [
+      {
+        id: 'c1',
+        name: 'Carlos Silva',
+        email: 'carlos.silva@email.com',
+        fileName: 'CV_Carlos_Silva_2024.pdf',
+        resumeText: `Desenvolvedor Full Stack com 6 anos de experiência. Forte em React, Node.js e PostgreSQL. Liderei migração de monólito para microsserviços. Inglês fluente.`,
+        history: [
+          { date: '15/01/2024', overallScore: 72, recommendation: 'Considerar' },
+          { date: '10/03/2024', overallScore: 78, recommendation: 'Considerar' }
+        ]
+      },
+      {
+        id: 'c2',
+        name: 'Ana Souza',
+        email: 'ana.souza@email.com',
+        fileName: 'Ana_Souza_Resume.docx',
+        resumeText: `Formada em Marketing. Fiz um bootcamp de React há 6 meses. Tenho experiência com vendas e atendimento ao cliente. Busco primeira oportunidade como dev junior.`
+      },
+      {
+        id: 'c3',
+        name: 'Roberto Mendes',
+        email: 'roberto@email.com',
+        fileName: 'RobertoMendes_TechLead.pdf',
+        resumeText: `Tech Lead com 10 anos de mercado. Java, Spring Boot, Angular e AWS. Foco em arquitetura corporativa e gestão de times grandes. Pouca experiência recente com React.`,
+        history: [
+          { date: '20/02/2024', overallScore: 60, recommendation: 'Baixa Prioridade' }
+        ]
+      }
+    ];
+
+    try {
+      const analyzedSimulations = await Promise.all(
+        rawCandidates.map(async (candidate) => {
+          const analysis = await analyzeResume(selectedJob, candidate.resumeText);
+          return { ...candidate, analysis };
+        })
+      );
+      
+      const allCandidates = [...realApps, ...analyzedSimulations];
+      allCandidates.sort((a, b) => (b.analysis?.overallScore || 0) - (a.analysis?.overallScore || 0));
+      
+      setCandidates(allCandidates);
+    } catch (error) {
+      alert("Erro ao processar candidatos. Verifique sua API Key.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getBadgeColor = (rec: string) => {
+      switch(rec) {
+          case 'Alta Prioridade': return 'bg-green-100 text-green-800 border-green-200';
+          case 'Considerar': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+          default: return 'bg-red-100 text-red-800 border-red-200';
+      }
+  };
+
+  if (analysisView && analysisView.analysis) {
+      return (
+          <div className="animate-in fade-in duration-300">
+              <button 
+                onClick={() => setAnalysisView(null)}
+                className="mb-6 text-geek-text hover:text-geek-blue font-medium flex items-center gap-2 transition-colors"
+              >
+                  &larr; Voltar para lista
+              </button>
+              
+              <div className="flex justify-between items-end mb-8">
+                <div>
+                    <h2 className="text-3xl font-bold text-geek-dark mb-2">Análise de {analysisView.name}</h2>
+                    <div className="flex items-center gap-2 text-geek-text">
+                       <span className="bg-white px-3 py-1 rounded-full border border-geek-border text-sm font-medium shadow-sm">
+                         {selectedJob?.title}
+                       </span>
+                    </div>
+                </div>
+              </div>
+
+              <AnalysisCard result={analysisView.analysis} />
+              
+              {analysisView.history && analysisView.history.length > 0 && (
+                <div className="mt-8 bg-white rounded-xl shadow-card border border-geek-border overflow-hidden">
+                  <div className="p-6 border-b border-geek-border">
+                    <h3 className="text-lg font-bold text-geek-dark flex items-center gap-2">
+                      <History className="w-5 h-5 text-geek-blue" />
+                      Histórico de Análises
+                    </h3>
+                  </div>
+                  <table className="min-w-full divide-y divide-gray-100">
+                    <thead className="bg-geek-gray">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Data</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Score Anterior</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Classificação</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Evolução</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {analysisView.history.map((item, idx) => {
+                        const currentScore = analysisView.analysis!.overallScore;
+                        const diff = currentScore - item.overallScore;
+                        
+                        return (
+                          <tr key={idx} className="hover:bg-geek-gray/30">
+                            <td className="px-6 py-4 text-sm text-geek-dark font-medium">{item.date}</td>
+                            <td className="px-6 py-4 text-sm font-bold text-geek-text">{item.overallScore}%</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getBadgeColor(item.recommendation)}`}>
+                                {item.recommendation}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              <div className="flex items-center gap-2">
+                                {diff > 0 ? (
+                                  <span className="text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded-md font-bold text-xs">
+                                    <TrendingUp className="w-3 h-3" /> +{diff}%
+                                  </span>
+                                ) : diff < 0 ? (
+                                  <span className="text-red-600 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md font-bold text-xs">
+                                    <TrendingDown className="w-3 h-3" /> {diff}%
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md font-bold text-xs">
+                                    <Minus className="w-3 h-3" /> 0%
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="mt-8 bg-white p-6 rounded-xl border border-geek-border shadow-card">
+                  <h3 className="font-bold mb-4 text-geek-dark flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-geek-blue" />
+                    Currículo Original
+                  </h3>
+                  <div className="bg-geek-gray/50 rounded-lg p-6 border border-geek-border">
+                    <p className="text-geek-text font-mono text-sm whitespace-pre-line leading-relaxed">
+                      {analysisView.resumeText}
+                    </p>
+                  </div>
+              </div>
+          </div>
+      )
+  }
+
+  return (
+    <div className="flex flex-col md:flex-row gap-8 min-h-[calc(100vh-140px)]">
+      
+      {/* Modal Style Detail */}
+      {modalCandidate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-geek-dark/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-100 transition-all border border-geek-border">
+            <div className="flex justify-between items-center p-6 border-b border-geek-border bg-gray-50/50">
+               <h3 className="text-lg font-bold text-geek-dark">Detalhes do Candidato</h3>
+               <button 
+                 onClick={() => setModalCandidate(null)}
+                 className="text-gray-400 hover:text-geek-dark hover:bg-gray-200 p-2 rounded-lg transition-colors"
+               >
+                 <X className="w-5 h-5" />
+               </button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <div className="flex items-center gap-5">
+                 <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-geek-blue to-blue-400 text-white flex items-center justify-center text-3xl font-bold shadow-lg shadow-blue-200">
+                    {modalCandidate.name.charAt(0)}
+                 </div>
+                 <div>
+                   <h4 className="text-2xl font-bold text-geek-dark">{modalCandidate.name}</h4>
+                   <p className="text-sm text-geek-text font-mono mt-1">ID: {modalCandidate.id}</p>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 <div className="flex items-center gap-4 p-4 bg-geek-gray rounded-xl border border-geek-border">
+                    <div className="bg-white p-2 rounded-lg text-geek-blue">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                       <p className="text-xs text-geek-text uppercase font-bold tracking-wider">Email</p>
+                       <p className="text-geek-dark font-medium">{modalCandidate.email}</p>
+                    </div>
+                 </div>
+                 
+                 <div className="flex items-center gap-4 p-4 bg-geek-gray rounded-xl border border-geek-border">
+                    <div className="bg-white p-2 rounded-lg text-geek-blue">
+                      <File className="w-5 h-5" />
+                    </div>
+                    <div>
+                       <p className="text-xs text-geek-text uppercase font-bold tracking-wider">Currículo</p>
+                       <p className="text-geek-dark font-medium break-all">{modalCandidate.fileName || 'N/A'}</p>
+                    </div>
+                 </div>
+
+                 {modalCandidate.analysis && (
+                   <div className="pt-2">
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="text-sm font-bold text-geek-text uppercase">Score de Aderência</span>
+                        <span className={`text-2xl font-bold ${getScoreColor(modalCandidate.analysis.overallScore)}`}>
+                          {modalCandidate.analysis.overallScore}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-geek-border rounded-full h-3">
+                         <div 
+                           className={`h-3 rounded-full transition-all duration-1000 ${modalCandidate.analysis.overallScore >= 80 ? 'bg-green-500' : modalCandidate.analysis.overallScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`} 
+                           style={{ width: `${modalCandidate.analysis.overallScore}%` }}
+                         ></div>
+                      </div>
+                   </div>
+                 )}
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-geek-border bg-gray-50/50 flex justify-end gap-3">
+               <button 
+                  onClick={() => setModalCandidate(null)}
+                  className="px-5 py-2.5 text-geek-text hover:bg-geek-gray rounded-lg font-semibold text-sm transition-colors"
+               >
+                 Fechar
+               </button>
+               <button 
+                  onClick={() => {
+                    setAnalysisView(modalCandidate);
+                    setModalCandidate(null);
+                  }}
+                  className="px-5 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors shadow-soft"
+               >
+                 Ver Análise Completa <ChevronRight className="w-4 h-4" />
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar: Job List */}
+      <div className="w-full md:w-80 flex flex-col gap-4">
+        <div className="bg-white rounded-xl shadow-card border border-geek-border p-5 sticky top-24">
+          <div className="flex justify-between items-center mb-6">
+             <h2 className="text-lg font-bold text-geek-dark">Vagas Abertas</h2>
+             <button 
+                onClick={() => { setIsCreatingJob(true); setIsAddingCandidate(false); setSelectedJob(null); }}
+                className="p-2 rounded-lg bg-geek-blue text-white hover:bg-geek-blueHover transition-colors shadow-sm"
+                title="Nova Vaga"
+             >
+               <Plus className="w-5 h-5" />
+             </button>
+          </div>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-geek-text" />
+            <input 
+              type="text" 
+              placeholder="Buscar vagas..." 
+              className="w-full pl-9 pr-4 py-2.5 bg-geek-gray border border-transparent rounded-lg text-sm focus:outline-none focus:bg-white focus:border-geek-blue focus:ring-1 focus:ring-geek-blue transition-all"
+            />
+          </div>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+            {jobs.map(job => (
+              <div 
+                key={job.id}
+                onClick={() => { setSelectedJob(job); setIsCreatingJob(false); setIsAddingCandidate(false); setCandidates([]); }}
+                className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border ${
+                  selectedJob?.id === job.id 
+                  ? 'bg-alice-blue border-geek-blue shadow-sm ring-1 ring-geek-blue/10' 
+                  : 'bg-white border-transparent hover:bg-geek-gray hover:border-geek-border'
+                }`}
+              >
+                <h3 className={`font-semibold text-sm ${selectedJob?.id === job.id ? 'text-geek-blue' : 'text-geek-dark'}`}>{job.title}</h3>
+                <p className="text-xs text-geek-text mt-1 font-medium">{job.department} • {job.location}</p>
+                <div className="mt-2.5">
+                   <span className="text-[10px] uppercase font-bold bg-geek-gray text-geek-text px-2 py-1 rounded-md">{job.type}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1">
+        {isCreatingJob ? (
+          <div className="bg-white rounded-xl shadow-card border border-geek-border p-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
+              <h2 className="text-2xl font-bold text-geek-dark">Cadastrar Nova Vaga</h2>
+              <button onClick={() => setIsCreatingJob(false)} className="text-geek-text hover:text-geek-dark transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Job Form Inputs */}
+              <div>
+                <label className="block text-sm font-bold text-geek-dark mb-2">Título da Vaga</label>
+                <input 
+                  type="text" 
+                  value={newJobData.title}
+                  onChange={(e) => setNewJobData({...newJobData, title: e.target.value})}
+                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                  placeholder="Ex: Designer UX/UI"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Departamento</label>
+                  <input 
+                    type="text" 
+                    value={newJobData.department}
+                    onChange={(e) => setNewJobData({...newJobData, department: e.target.value})}
+                    className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                    placeholder="Ex: Produto"
+                  />
+                </div>
+                 <div>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Modelo de Trabalho</label>
+                  <select 
+                    value={newJobData.type}
+                    onChange={(e) => setNewJobData({...newJobData, type: e.target.value as any})}
+                    className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                  >
+                    <option value="Presencial">Presencial</option>
+                    <option value="Híbrido">Híbrido</option>
+                    <option value="Remoto">Remoto</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-geek-dark mb-2">Localização</label>
+                <input 
+                  type="text" 
+                  value={newJobData.location}
+                  onChange={(e) => setNewJobData({...newJobData, location: e.target.value})}
+                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                  placeholder="Ex: São Paulo, SP"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-geek-dark mb-2">Descrição da Vaga</label>
+                <textarea 
+                  rows={4}
+                  value={newJobData.description}
+                  onChange={(e) => setNewJobData({...newJobData, description: e.target.value})}
+                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                  placeholder="Descreva as responsabilidades e o contexto da vaga..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-geek-dark mb-2">Requisitos (um por linha)</label>
+                <textarea 
+                  rows={4}
+                  value={requirementsInput}
+                  onChange={(e) => setRequirementsInput(e.target.value)}
+                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
+                  placeholder="- Experiência com Figma&#10;- Conhecimento em Design System"
+                />
+              </div>
+
+              <div className="pt-6 border-t border-geek-border flex justify-end gap-4">
+                <button 
+                  onClick={() => setIsCreatingJob(false)}
+                  className="px-6 py-2.5 text-geek-text bg-white border border-geek-border hover:bg-geek-gray rounded-lg font-semibold transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleCreateJob}
+                  disabled={!newJobData.title || !newJobData.description}
+                  className="px-6 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 shadow-soft"
+                >
+                  <Save className="w-4 h-4" />
+                  Salvar Vaga
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : isAddingCandidate ? (
+          <div className="bg-white rounded-xl shadow-card border border-geek-border p-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-geek-dark">Adicionar Candidato</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm text-geek-text">para a vaga:</span>
+                  <span className="text-sm font-semibold text-geek-blue bg-geek-blue/10 px-2 py-0.5 rounded">{selectedJob?.title}</span>
+                </div>
+              </div>
+              <button onClick={() => setIsAddingCandidate(false)} className="text-geek-text hover:text-geek-dark transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 gap-6">
+                 <div>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Nome Completo</label>
+                  <input 
+                    type="text" 
+                    value={manualCandidate.name}
+                    onChange={(e) => setManualCandidate({...manualCandidate, name: e.target.value})}
+                    className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                    placeholder="João Silva"
+                  />
+                 </div>
+                 <div>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Email</label>
+                  <input 
+                    type="email" 
+                    value={manualCandidate.email}
+                    onChange={(e) => setManualCandidate({...manualCandidate, email: e.target.value})}
+                    className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                    placeholder="joao@email.com"
+                  />
+                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-geek-dark mb-3">Upload do Currículo</label>
+                {!manualCandidate.fileName ? (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-geek-blue/30 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:bg-geek-blue/5 hover:border-geek-blue transition-all group"
+                  >
+                    <div className="bg-white p-4 rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                       <UploadCloud className="w-8 h-8 text-geek-blue" />
+                    </div>
+                    <p className="text-base text-geek-dark font-semibold">Clique para fazer upload</p>
+                    <p className="text-sm text-geek-text mt-1">PDF, DOCX ou TXT</p>
+                    <input 
+                      ref={fileInputRef}
+                      type="file" 
+                      className="hidden" 
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-geek-gray border border-geek-border rounded-xl p-4 flex items-center justify-between">
+                     <div className="flex items-center gap-4">
+                        <div className="bg-white p-2 rounded-lg text-geek-blue border border-geek-border">
+                           <FileText className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-geek-dark">{manualCandidate.fileName}</p>
+                          <p className="text-xs text-geek-text">Pronto para análise</p>
+                        </div>
+                     </div>
+                     <button 
+                       onClick={() => setManualCandidate({...manualCandidate, fileName: '', resumeText: ''})}
+                       className="p-2 hover:bg-white rounded-lg text-geek-text hover:text-red-500 transition-colors"
+                     >
+                        <X className="w-5 h-5" />
+                     </button>
+                  </div>
+                )}
+              </div>
+
+              {manualCandidate.resumeText && !loading && (
+                 <div>
+                    <label className="block text-sm font-bold text-geek-dark mb-2">Conteúdo Extraído (Editável)</label>
+                    <textarea 
+                      value={manualCandidate.resumeText}
+                      onChange={(e) => setManualCandidate({...manualCandidate, resumeText: e.target.value})}
+                      className="w-full h-40 p-4 text-sm bg-geek-gray border border-geek-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-geek-blue/20"
+                    />
+                 </div>
+              )}
+
+              <div className="pt-6 border-t border-geek-border flex justify-end gap-4">
+                <button 
+                  onClick={() => setIsAddingCandidate(false)}
+                  className="px-6 py-2.5 text-geek-text bg-white border border-geek-border hover:bg-geek-gray rounded-lg font-semibold transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleManualCandidateSubmit}
+                  disabled={loading || !manualCandidate.resumeText || !manualCandidate.name}
+                  className="px-6 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 shadow-soft"
+                >
+                   {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                   Analisar Candidato
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : !selectedJob ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white rounded-xl shadow-card border border-geek-border min-h-[400px]">
+            <div className="bg-geek-gray p-6 rounded-full mb-6">
+               <Filter className="w-10 h-10 text-geek-text opacity-50" />
+            </div>
+            <h3 className="text-xl font-bold text-geek-dark">Nenhuma vaga selecionada</h3>
+            <p className="text-geek-text mt-2 max-w-sm">Selecione uma vaga no menu lateral para visualizar e gerenciar os candidatos ou crie uma nova oportunidade.</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-card border border-geek-border flex flex-col h-full min-h-[600px]">
+            {/* Header Vaga */}
+            <div className="p-8 border-b border-geek-border bg-white rounded-t-xl">
+               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                       <h1 className="text-2xl font-bold text-geek-dark">{selectedJob.title}</h1>
+                       <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded uppercase">Ativa</span>
+                    </div>
+                    <p className="text-geek-text max-w-2xl line-clamp-2">{selectedJob.description}</p>
+                  </div>
+                  <div className="flex gap-3 shrink-0">
+                    <button 
+                      onClick={() => setIsAddingCandidate(true)}
+                      className="flex items-center gap-2 bg-white border border-geek-border hover:bg-geek-gray text-geek-dark px-4 py-2.5 rounded-lg font-semibold transition-colors shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Candidato
+                    </button>
+                    <button 
+                      onClick={simulateBatchProcessing}
+                      disabled={loading}
+                      className="flex items-center gap-2 bg-geek-dark hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 shadow-soft"
+                    >
+                      {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <Users className="w-4 h-4" />}
+                      {loading ? "Processando..." : "Simular Processo"}
+                    </button>
+                  </div>
+               </div>
+            </div>
+
+            {/* Content Table */}
+            <div className="flex-1 p-0 overflow-hidden">
+              {candidates.length === 0 && !loading ? (
+                <div className="h-full flex flex-col items-center justify-center p-12 text-center">
+                   <Users className="w-16 h-16 text-geek-gray mb-4" />
+                   <h3 className="text-lg font-bold text-geek-dark">Ainda não há candidatos</h3>
+                   <p className="text-geek-text mt-2">Comece adicionando candidatos manualmente ou simulando o processo.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-100">
+                    <thead className="bg-geek-gray">
+                      <tr>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Candidato</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider cursor-pointer hover:text-geek-dark transition-colors group">
+                          <div className="flex items-center gap-1">Score <ArrowUpDown className="w-3 h-3 opacity-50 group-hover:opacity-100"/></div>
+                        </th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Técnico</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Cultural</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Status</th>
+                        <th scope="col" className="relative px-6 py-4"><span className="sr-only">Ações</span></th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {candidates.map((candidate, idx) => {
+                        const isTopMatch = idx === 0 && (candidate.analysis?.overallScore || 0) > 85;
+
+                        return (
+                          <tr 
+                            key={candidate.id} 
+                            onClick={() => setModalCandidate(candidate)}
+                            className={`cursor-pointer transition-all hover:bg-geek-gray/40 border-l-4 ${
+                              isTopMatch 
+                                ? 'bg-green-50/30 border-l-green-500' 
+                                : 'border-l-transparent'
+                            }`}
+                          >
+                            <td className="px-6 py-5 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-geek-text'}`}>
+                                  {candidate.name.charAt(0)}
+                                </div>
+                                <div className="ml-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className="text-sm font-bold text-geek-dark">{candidate.name}</div>
+                                    {isTopMatch && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-100 text-green-700 tracking-wide">
+                                        <Sparkles className="w-3 h-3 mr-1 fill-green-500" />
+                                        Top
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-geek-text mt-0.5">{candidate.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap">
+                              <span className={`text-lg font-bold ${getScoreColor(candidate.analysis?.overallScore || 0)}`}>
+                                {candidate.analysis?.overallScore}%
+                              </span>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
+                               <div className="flex flex-col gap-1 w-28">
+                                  <div className="flex justify-between text-xs font-medium text-geek-text">
+                                     <span>Técnico</span>
+                                     <span>{candidate.analysis?.technicalFit}%</span>
+                                  </div>
+                                  <div className="w-full bg-geek-border rounded-full h-1.5">
+                                    <div className="bg-geek-blue h-1.5 rounded-full" style={{ width: `${candidate.analysis?.technicalFit}%` }}></div>
+                                  </div>
+                               </div>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
+                               <div className="flex flex-col gap-1 w-28">
+                                  <div className="flex justify-between text-xs font-medium text-geek-text">
+                                     <span>Cultural</span>
+                                     <span>{candidate.analysis?.culturalFit}%</span>
+                                  </div>
+                                  <div className="w-full bg-geek-border rounded-full h-1.5">
+                                    <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${candidate.analysis?.culturalFit}%` }}></div>
+                                  </div>
+                               </div>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap">
+                              <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md border ${getBadgeColor(candidate.analysis?.recommendation || '')}`}>
+                                {candidate.analysis?.recommendation}
+                              </span>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                              <button className="text-geek-text hover:text-geek-blue transition-colors bg-white p-2 rounded-lg border border-transparent hover:border-geek-border shadow-sm">
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default RecruiterDashboard;

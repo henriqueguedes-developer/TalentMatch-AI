@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TalentMatch AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              // GeekHunter inspired palette
+              geek: {
+                dark: '#1D3557',   // Deep Blue (Primary Text/Headings)
+                blue: '#00A8E8',   // Turquoise (Buttons/Links/Accents)
+                blueHover: '#008BBF', // Button Hover
+                gray: '#F3F4F6',   // Background
+                surface: '#FFFFFF', // Cards
+                text: '#6B7280',   // Secondary Text
+                border: '#E5E7EB', // Borders
+              }
+            },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+              'card': '0 2px 8px rgba(0, 0, 0, 0.04)',
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.1"
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+</style>
+</head>
+  <body class="bg-[#F3F4F6] text-[#1D3557] font-sans antialiased">
+    <div id="root"></div>
+  </body>
+</html>
