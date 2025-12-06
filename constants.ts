@@ -33,6 +33,113 @@ export const BRAZIL_STATES = [
 
 export const MOCK_JOBS: Job[] = [
   {
+    id: 'custom-1',
+    title: 'Tech Lead de Engenharia de Software (Node.js & React)',
+    department: 'Engenharia de Produto',
+    location: { city: 'Florianópolis', state: 'SC' },
+    type: ['Remoto', 'Híbrido'],
+    contractType: ['PJ'],
+    description: `Estamos buscando um Tech Lead experiente para liderar a evolução da nossa Plataforma B2B Multi-Service. Você será responsável por definir a arquitetura técnica, garantir a escalabilidade do backend e mentorar desenvolvedores plenos e seniores.
+    
+    O desafio principal é orquestrar a migração de monolitos para microsserviços, garantindo alta disponibilidade e segurança (RBAC/LGPD).`,
+    responsibilities: [
+      'Liderar tecnicamente o squad de plataforma, definindo padrões de projeto e arquitetura',
+      'Arquitetar soluções distribuídas utilizando Node.js (NestJS) e microsserviços',
+      'Garantir a qualidade do código através de Code Reviews rigorosos e implementação de testes',
+      'Desenhar estratégias de cache (Redis) e processamento assíncrono para alto volume de dados',
+      'Mentorar o time em boas práticas de TypeScript, Clean Architecture e SOLID'
+    ],
+    requirements: [
+      '10+ anos de experiência em desenvolvimento de software',
+      'Domínio avançado de Node.js (NestJS) e TypeScript',
+      'Experiência sólida com React no Frontend',
+      'Vivência em arquitetura de microsserviços e sistemas distribuídos',
+      'Experiência com bancos relacionais (PostgreSQL) e NoSQL (Redis)',
+      'Conhecimento em Cloud (AWS) e Containerização (Docker)'
+    ],
+    differentials: [
+      'Experiência prévia como Arquiteto de Software ou Tech Lead',
+      'Conhecimento em Governança de dados (LGPD) e Segurança (JWT, RBAC)',
+      'Vivência em ambientes de alto tráfego (B2B)',
+      'Contribuições em projetos Open Source'
+    ],
+    softSkills: [
+      'Liderança técnica inspiradora',
+      'Capacidade de traduzir requisitos de negócio em soluções técnicas',
+      'Comunicação clara com stakeholders não técnicos',
+      'Mentalidade ágil e foco em entrega de valor'
+    ],
+    schedule: 'Horário Flexível - Foco em Entregas'
+  },
+  {
+    id: 'custom-2',
+    title: 'Arquiteto de Soluções Backend (High Performance)',
+    department: 'Core Platform',
+    location: { city: 'São Paulo', state: 'SP' },
+    type: ['Remoto'],
+    contractType: ['PJ', 'Cooperado'],
+    description: `Junte-se ao time responsável pelo "coração" da nossa tecnologia. Buscamos um especialista em Backend que respire performance, escalabilidade e otimização. Se você gosta de tunar queries SQL, configurar Clusters Redis e desenhar arquiteturas resilientes a falhas, essa vaga é sua.`,
+    responsibilities: [
+      'Otimizar a performance de APIs REST e GraphQL críticas',
+      'Implementar e gerenciar filas de processamento assíncrono (Bull/SQS)',
+      'Monitorar a saúde da aplicação (APM, Logs) e atuar proativamente em gargalos',
+      'Desenvolver workers em Python ou Node.js para processamento massivo de dados',
+      'Garantir a segurança da aplicação implementando autenticação e autorização robustas'
+    ],
+    requirements: [
+      'Expertise profunda em Node.js e ecossistema JavaScript/TypeScript',
+      'Domínio de PostgreSQL (Indexação, Otimização de Queries, Partitioning)',
+      'Experiência avançada com Redis (Caching, Pub/Sub, Cluster)',
+      'Vivência com filas e mensageria (RabbitMQ, Kafka ou SQS)',
+      'Docker e Kubernetes para orquestração'
+    ],
+    differentials: [
+      'Conhecimento em Python para Scripts/Data Engineering',
+      'Experiência com GraphQL em larga escala',
+      'Certificações AWS (Solutions Architect)'
+    ],
+    softSkills: [
+      'Perfil analítico e orientado a dados (Data Driven)',
+      'Resiliência e capacidade de resolução de problemas complexos sob pressão',
+      'Autonomia e autogerenciamento (Trabalho Remoto)'
+    ],
+    schedule: 'Segunda a Sexta, Horário Comercial'
+  },
+  {
+    id: 'custom-3',
+    title: 'Engenheiro de Software Sênior (Full Stack)',
+    department: 'Inovação',
+    location: { city: 'Curitiba', state: 'PR' },
+    type: ['Remoto'],
+    contractType: ['CLT', 'PJ'],
+    description: `Buscamos um Engenheiro de Software Sênior versátil para atuar no ciclo completo de desenvolvimento de novos produtos. Você trabalhará desde a concepção da interface em React até a estruturação do banco de dados e deploy na nuvem.`,
+    responsibilities: [
+      'Desenvolver novas features de ponta a ponta (Frontend e Backend)',
+      'Implementar interfaces ricas e responsivas com React e Tailwind/Material UI',
+      'Criar APIs seguras e documentadas (Swagger/OpenAPI)',
+      'Integrar sistemas com APIs de terceiros (Gateways de Pagamento, ERPs)',
+      'Participar de rituais ágeis e contribuir para a melhoria contínua do processo'
+    ],
+    requirements: [
+      'Sólida experiência com React (Hooks, Context API, State Management)',
+      'Sólida experiência com Node.js/NestJS no Backend',
+      'Experiência com CI/CD (GitHub Actions, Jenkins ou similar)',
+      'Conhecimento em testes automatizados (Jest, Cypress, React Testing Library)',
+      'Inglês Técnico para leitura e escrita'
+    ],
+    differentials: [
+      'Experiência com Next.js',
+      'Conhecimento em ferramentas de monitoramento (New Relic, Datadog)',
+      'Experiência com metodologias de Design System'
+    ],
+    softSkills: [
+      'Trabalho em equipe e colaboração',
+      'Foco na experiência do usuário (UX)',
+      'Adaptabilidade a mudanças de escopo'
+    ],
+    schedule: 'Flexível'
+  },
+  {
     id: '1',
     title: 'Desenvolvedor(a) Full Stack Sênior – Tech Lead (.NET, Angular)',
     department: 'Engenharia',

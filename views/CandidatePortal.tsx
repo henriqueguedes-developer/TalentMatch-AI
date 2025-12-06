@@ -1,10 +1,11 @@
+
 import React, { useState, useRef } from 'react';
 import { Job, AnalysisResult, Candidate } from '../types';
-import { analyzeResume, findBestMatches, JobMatch } from '../services/geminiService';
+import { analyzeResume, findBestMatches, JobMatch, extractTextFromFile } from '../services/geminiService';
 import AnalysisCard from '../components/AnalysisCard';
 import InterviewModal from '../components/InterviewModal';
 import { useAppContext } from '../contexts/AppContext';
-import { FileText, Loader2, CheckCircle2, UploadCloud, X, ArrowRight, Briefcase, Search, ChevronLeft, Send, Edit2, MapPin, Building2, Mic2 } from 'lucide-react';
+import { FileText, Loader2, CheckCircle2, UploadCloud, X, ArrowRight, Briefcase, Search, ChevronLeft, Send, Edit2, MapPin, Building2, Mic2, AlertTriangle, DollarSign } from 'lucide-react';
 
 const CandidatePortal: React.FC = () => {
   const { jobs, addApplication } = useAppContext();
@@ -20,30 +21,32 @@ const CandidatePortal: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   
   // Preferences State
-  const [preferences, setPreferences] = useState<{workModels: string[], contractTypes: string[]}>({
+  const [preferences, setPreferences] = useState<{workModels: string[], contractTypes: string[], salaryExpectation: string}>({
     workModels: [],
-    contractTypes: []
+    contractTypes: [],
+    salaryExpectation: ''
   });
 
   // UI/Loading state
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applicationSuccess, setApplicationSuccess] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setFileName(file.name);
     setLoading(true);
-    setLoadingMessage("Processando seu currículo...");
+    setLoadingMessage("Lendo documento via IA...");
+    setErrorMsg('');
 
-    // Mock extraction delay
-    setTimeout(() => {
+    try {
       if (file.type === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -52,11 +55,16 @@ const CandidatePortal: React.FC = () => {
         };
         reader.readAsText(file);
       } else {
-        // Mock extraction for PDF/Docx
-        setResumeText(`[SIMULAÇÃO DE CONTEÚDO PARA: ${file.name}]\n\nEste é um ambiente de demonstração.\nSe você fez upload de um PDF/DOC, o conteúdo real não pôde ser extraído no navegador.\n\n>> EDITE ESTE TEXTO << e cole o conteúdo real do seu currículo aqui para uma análise precisa da IA.`);
+        // Use Gemini to extract text from PDF/Images
+        const extractedText = await extractTextFromFile(file);
+        setResumeText(extractedText);
         setLoading(false);
       }
-    }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg("Não foi possível ler o arquivo. Tente colar o texto manualmente ou use outro formato.");
+      setLoading(false);
+    }
   };
 
   const handleFindMatches = async () => {
@@ -142,15 +150,17 @@ const CandidatePortal: React.FC = () => {
     e.stopPropagation();
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
        const file = e.dataTransfer.files[0];
        setFileName(file.name);
        setLoading(true);
-       setLoadingMessage("Processando arquivo...");
-       setTimeout(() => {
+       setLoadingMessage("Lendo documento via IA...");
+       setErrorMsg('');
+       
+       try {
         if (file.type === "text/plain") {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -159,10 +169,14 @@ const CandidatePortal: React.FC = () => {
           };
           reader.readAsText(file);
         } else {
-          setResumeText(`[SIMULAÇÃO DE CONTEÚDO PARA: ${file.name}]\n\nEste é um ambiente de demonstração.\n\n>> EDITE ESTE TEXTO << e cole o conteúdo real do seu currículo aqui.`);
-          setLoading(false);
+           const extractedText = await extractTextFromFile(file);
+           setResumeText(extractedText);
+           setLoading(false);
         }
-       }, 1000);
+       } catch (err) {
+         setErrorMsg("Erro na leitura do arquivo.");
+         setLoading(false);
+       }
     }
   };
 
@@ -173,6 +187,7 @@ const CandidatePortal: React.FC = () => {
     setMatches([]);
     setAnalysisResult(null);
     setApplicationSuccess(false);
+    setErrorMsg('');
   };
 
   const getScoreColor = (score: number) => {
@@ -188,7 +203,7 @@ const CandidatePortal: React.FC = () => {
            <Loader2 className="w-8 h-8 text-geek-blue animate-spin" />
         </div>
         <h3 className="text-xl font-bold text-geek-dark">{loadingMessage}</h3>
-        <p className="text-geek-text mt-2 font-medium">Isso pode levar alguns segundos.</p>
+        <p className="text-geek-text mt-2 font-medium">Nossa IA está lendo seu documento...</p>
       </div>
     );
   }
@@ -209,6 +224,12 @@ const CandidatePortal: React.FC = () => {
           </div>
 
           <div className="w-full max-w-2xl">
+             {errorMsg && (
+               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 flex items-center gap-2">
+                 <AlertTriangle className="w-5 h-5" /> {errorMsg}
+               </div>
+             )}
+
              {!resumeText ? (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
@@ -221,13 +242,13 @@ const CandidatePortal: React.FC = () => {
                   </div>
                   <div className="text-center">
                     <p className="font-bold text-xl text-geek-dark">Arraste seu CV ou clique aqui</p>
-                    <p className="text-sm text-geek-text mt-2 font-medium">Suportamos PDF, DOCX ou TXT</p>
+                    <p className="text-sm text-geek-text mt-2 font-medium">Suportamos PDF, DOCX, Imagens ou TXT</p>
                   </div>
                   <input 
                     ref={fileInputRef}
                     type="file" 
                     className="hidden" 
-                    accept=".pdf,.doc,.docx,.txt"
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
                     onChange={handleFileUpload}
                   />
                 </div>
@@ -241,7 +262,7 @@ const CandidatePortal: React.FC = () => {
                           <div>
                             <p className="font-bold text-geek-dark text-lg">{fileName}</p>
                             <p className="text-sm text-green-600 font-bold flex items-center gap-1.5 mt-1">
-                              <CheckCircle2 className="w-4 h-4" /> Pronto para análise
+                              <CheckCircle2 className="w-4 h-4" /> Leitura Concluída
                             </p>
                           </div>
                        </div>
@@ -256,7 +277,7 @@ const CandidatePortal: React.FC = () => {
                     <div className="bg-geek-gray rounded-xl p-1 mb-8 border border-geek-border">
                        <div className="flex items-center justify-between px-3 py-2">
                           <label className="text-xs font-bold text-geek-dark uppercase flex items-center gap-1.5">
-                            <Edit2 className="w-3 h-3 text-geek-blue"/> Edite o conteúdo se necessário
+                            <Edit2 className="w-3 h-3 text-geek-blue"/> Conteúdo Extraído (Editável)
                           </label>
                        </div>
                        <textarea 
@@ -281,13 +302,13 @@ const CandidatePortal: React.FC = () => {
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center max-w-5xl">
              <div className="p-6 bg-white rounded-2xl border border-geek-border shadow-card">
                 <div className="bg-geek-gray w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-geek-dark font-bold">1</div>
-                <h3 className="font-bold text-geek-dark mb-2 text-lg">Upload Simples</h3>
-                <p className="text-sm text-geek-text leading-relaxed">Não perca tempo preenchendo formulários. Seu CV é tudo que precisamos.</p>
+                <h3 className="font-bold text-geek-dark mb-2 text-lg">Upload Inteligente</h3>
+                <p className="text-sm text-geek-text leading-relaxed">Nossa IA lê PDFs e imagens instantaneamente. Não precisa redigitar nada.</p>
              </div>
              <div className="p-6 bg-white rounded-2xl border border-geek-border shadow-card">
                 <div className="bg-geek-gray w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-geek-dark font-bold">2</div>
                 <h3 className="font-bold text-geek-dark mb-2 text-lg">IA TalentMatch</h3>
-                <p className="text-sm text-geek-text leading-relaxed">Nossa tecnologia cruza suas skills técnicas e comportamentais com o mercado.</p>
+                <p className="text-sm text-geek-text leading-relaxed">Tecnologia avançada cruza suas skills com as melhores oportunidades.</p>
              </div>
              <div className="p-6 bg-white rounded-2xl border border-geek-border shadow-card">
                 <div className="bg-geek-gray w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-geek-dark font-bold">3</div>
@@ -433,11 +454,27 @@ const CandidatePortal: React.FC = () => {
                         ))}
                     </div>
                  </div>
+
+                 <div>
+                    <label className="block font-bold text-geek-dark mb-3">Pretensão Salarial (Mensal)</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-3.5 text-geek-text font-bold flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" /> R$
+                      </span>
+                      <input 
+                        type="text"
+                        value={preferences.salaryExpectation}
+                        onChange={(e) => setPreferences({...preferences, salaryExpectation: e.target.value})}
+                        placeholder="0,00"
+                        className="w-full pl-14 pr-4 py-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-bold text-geek-dark"
+                      />
+                    </div>
+                 </div>
               </div>
 
               <button 
                 onClick={handleApply}
-                disabled={isApplying || preferences.workModels.length === 0 || preferences.contractTypes.length === 0}
+                disabled={isApplying || preferences.workModels.length === 0 || preferences.contractTypes.length === 0 || !preferences.salaryExpectation}
                 className="mt-10 w-full bg-geek-blue hover:bg-geek-blueHover text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1 flex items-center justify-center gap-3 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isApplying ? (

@@ -1,14 +1,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Job, Candidate } from '../types';
-import { analyzeResume } from '../services/geminiService';
+import { analyzeResume, extractTextFromFile } from '../services/geminiService';
 import AnalysisCard from '../components/AnalysisCard';
 import { useAppContext } from '../contexts/AppContext';
 import { BRAZIL_STATES } from '../constants';
-import { Search, Users, Loader2, Filter, ChevronRight, ArrowUpDown, History, Sparkles, Plus, Save, X, UploadCloud, FileText, Mail, MapPin, Briefcase, ListChecks, Star, BrainCircuit, Clock } from 'lucide-react';
+import { Search, Users, Loader2, Filter, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, History, Sparkles, Plus, Save, X, UploadCloud, FileText, Mail, MapPin, Briefcase, ListChecks, Star, BrainCircuit, Clock, DollarSign } from 'lucide-react';
 
 const RecruiterDashboard: React.FC = () => {
-  const { jobs, addJob, applications } = useAppContext();
+  const { jobs, addJob, applications, addApplication } = useAppContext();
   
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -19,6 +19,11 @@ const RecruiterDashboard: React.FC = () => {
   const [modalCandidate, setModalCandidate] = useState<Candidate | null>(null);
   const [isCreatingJob, setIsCreatingJob] = useState(false);
   const [isAddingCandidate, setIsAddingCandidate] = useState(false);
+
+  // Filter & Sort States
+  const [filterTerm, setFilterTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all'); // 'all', 'Alta Prioridade', 'Considerar', 'Baixa Prioridade'
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Form state for new job
   const [newJobData, setNewJobData] = useState<{
@@ -64,11 +69,47 @@ const RecruiterDashboard: React.FC = () => {
       
       // If we have existing candidates (simulated), merge them. 
       setCandidates(prev => {
-        const combined = [...realApps, ...prev.filter(p => !realApps.find(r => r.id === p.id))];
-        return combined.sort((a, b) => (b.analysis?.overallScore || 0) - (a.analysis?.overallScore || 0));
+        // Keep simulated ones that are NOT in realApps (by ID check or logic)
+        const currentIds = new Set(realApps.map(r => r.id));
+        const keptSimulated = prev.filter(p => !currentIds.has(p.id) && p.jobId === selectedJob.id); 
+        
+        return [...realApps, ...keptSimulated];
       });
+      
+      // Reset filters
+      setFilterTerm('');
+      setFilterStatus('all');
+      setSortDirection('desc');
     }
   }, [selectedJob, applications]);
+
+  // Derived state for filtered and sorted candidates
+  const filteredAndSortedCandidates = React.useMemo(() => {
+    let result = [...candidates];
+
+    // 1. Filter by Search Term (Name or Email)
+    if (filterTerm) {
+      const lowerTerm = filterTerm.toLowerCase();
+      result = result.filter(c => 
+        c.name.toLowerCase().includes(lowerTerm) || 
+        c.email.toLowerCase().includes(lowerTerm)
+      );
+    }
+
+    // 2. Filter by Status/Recommendation
+    if (filterStatus !== 'all') {
+      result = result.filter(c => c.analysis?.recommendation === filterStatus);
+    }
+
+    // 3. Sort by Score
+    result.sort((a, b) => {
+      const scoreA = a.analysis?.overallScore || 0;
+      const scoreB = b.analysis?.overallScore || 0;
+      return sortDirection === 'desc' ? scoreB - scoreA : scoreA - scoreB;
+    });
+
+    return result;
+  }, [candidates, filterTerm, filterStatus, sortDirection]);
 
   const handleCreateJob = () => {
     if (!newJobData.title || !newJobData.description || !newJobData.state) return;
@@ -118,14 +159,14 @@ const RecruiterDashboard: React.FC = () => {
     });
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setManualCandidate(prev => ({ ...prev, fileName: file.name }));
     setLoading(true);
 
-    setTimeout(() => {
+    try {
       if (file.type === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -134,13 +175,18 @@ const RecruiterDashboard: React.FC = () => {
         };
         reader.readAsText(file);
       } else {
+        // Use Gemini to extract text real time
+        const extractedText = await extractTextFromFile(file);
         setManualCandidate(prev => ({ 
           ...prev, 
-          resumeText: `[CONTEÚDO EXTRAÍDO DO ARQUIVO: ${file.name}]\n\nCandidato: ${manualCandidate.name || 'Desconhecido'}\nExperiência: Profissional com histórico sólido na área.\n...(Simulação de extração de texto via OCR)...` 
+          resumeText: extractedText
         }));
         setLoading(false);
       }
-    }, 1000);
+    } catch (error) {
+      alert("Erro ao ler arquivo. Verifique se é um formato suportado.");
+      setLoading(false);
+    }
   };
 
   const handleManualCandidateSubmit = async () => {
@@ -159,7 +205,7 @@ const RecruiterDashboard: React.FC = () => {
         jobId: selectedJob.id
       };
       
-      const { addApplication } = useAppContext(); 
+      // Use function from context that is now passed as prop or imported
       addApplication(newCandidate);
 
       setIsAddingCandidate(false);
@@ -177,6 +223,8 @@ const RecruiterDashboard: React.FC = () => {
     
     const realApps = applications.filter(app => app.jobId === selectedJob.id);
 
+    // Mock candidates but now we will re-analyze them to get dynamic results if needed
+    // Or just static mock with correct jobId
     const rawCandidates: Candidate[] = [
       {
         id: 'c1',
@@ -187,14 +235,16 @@ const RecruiterDashboard: React.FC = () => {
         history: [
           { date: '15/01/2024', overallScore: 72, recommendation: 'Considerar' },
           { date: '10/03/2024', overallScore: 78, recommendation: 'Considerar' }
-        ]
+        ],
+        jobId: selectedJob.id
       },
       {
         id: 'c2',
         name: 'Ana Souza',
         email: 'ana.souza@email.com',
         fileName: 'Ana_Souza_Resume.docx',
-        resumeText: `Formada em Marketing. Fiz um bootcamp de React há 6 meses. Tenho experiência com vendas e atendimento ao cliente. Busco primeira oportunidade como dev junior.`
+        resumeText: `Formada em Marketing. Fiz um bootcamp de React há 6 meses. Tenho experiência com vendas e atendimento ao cliente. Busco primeira oportunidade como dev junior.`,
+        jobId: selectedJob.id
       }
     ];
 
@@ -206,10 +256,7 @@ const RecruiterDashboard: React.FC = () => {
         })
       );
       
-      const allCandidates = [...realApps, ...analyzedSimulations];
-      allCandidates.sort((a, b) => (b.analysis?.overallScore || 0) - (a.analysis?.overallScore || 0));
-      
-      setCandidates(allCandidates);
+      setCandidates([...realApps, ...analyzedSimulations]);
     } catch (error) {
       alert("Erro ao processar candidatos. Verifique sua API Key.");
     } finally {
@@ -229,6 +276,10 @@ const RecruiterDashboard: React.FC = () => {
           case 'Considerar': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
           default: return 'bg-red-100 text-red-800 border-red-200';
       }
+  };
+
+  const toggleSort = () => {
+    setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
   };
 
   if (analysisView && analysisView.analysis) {
@@ -257,7 +308,6 @@ const RecruiterDashboard: React.FC = () => {
               {/* History Table */}
               {analysisView.history && analysisView.history.length > 0 && (
                 <div className="mt-8 bg-white rounded-xl shadow-card border border-geek-border overflow-hidden">
-                   {/* ... (Previous history code) ... */}
                    <div className="p-6 border-b border-geek-border">
                     <h3 className="text-lg font-bold text-geek-dark flex items-center gap-2">
                       <History className="w-5 h-5 text-geek-blue" />
@@ -296,7 +346,7 @@ const RecruiterDashboard: React.FC = () => {
                     <Briefcase className="w-5 h-5 text-geek-blue" />
                     Preferências do Candidato
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <span className="text-xs font-bold text-geek-text uppercase">Modelos de Trabalho</span>
                       <div className="flex flex-wrap gap-2 mt-2">
@@ -313,6 +363,14 @@ const RecruiterDashboard: React.FC = () => {
                         ))}
                       </div>
                     </div>
+                     {analysisView.preferences.salaryExpectation && (
+                       <div>
+                          <span className="text-xs font-bold text-geek-text uppercase">Pretensão Salarial</span>
+                          <p className="flex items-center gap-1 mt-2 text-geek-dark font-bold text-lg">
+                             <span className="text-xs text-geek-text">R$</span> {analysisView.preferences.salaryExpectation}
+                          </p>
+                       </div>
+                     )}
                   </div>
                 </div>
               )}
@@ -382,6 +440,15 @@ const RecruiterDashboard: React.FC = () => {
                           <span key={c} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600">{c}</span>
                         ))}
                       </div>
+                      {modalCandidate.preferences.salaryExpectation && (
+                         <div className="mt-3 pt-3 border-t border-geek-border/50">
+                            <span className="text-xs font-bold text-geek-text uppercase">Pretensão Salarial</span>
+                            <p className="font-bold text-geek-dark text-lg flex items-center gap-1">
+                               <span className="text-xs text-geek-text">R$</span>
+                               {modalCandidate.preferences.salaryExpectation}
+                            </p>
+                         </div>
+                      )}
                    </div>
                  )}
 
@@ -474,7 +541,8 @@ const RecruiterDashboard: React.FC = () => {
       <div className="flex-1">
         {isCreatingJob ? (
           <div className="bg-white rounded-xl shadow-card border border-geek-border p-8 animate-in fade-in slide-in-from-bottom-4">
-            <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
+             {/* ... Creating Job Form ... */}
+             <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
               <h2 className="text-2xl font-bold text-geek-dark">Cadastrar Nova Vaga</h2>
               <button onClick={() => setIsCreatingJob(false)} className="text-geek-text hover:text-geek-dark transition-colors">
                 <X className="w-6 h-6" />
@@ -764,6 +832,13 @@ const RecruiterDashboard: React.FC = () => {
                     />
                  </div>
               )}
+              
+              {loading && (
+                <div className="bg-geek-gray border border-geek-border rounded-xl p-6 flex flex-col items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-geek-blue animate-spin mb-2" />
+                    <p className="text-geek-dark font-semibold">Lendo documento...</p>
+                </div>
+              )}
 
               <div className="pt-6 border-t border-geek-border flex justify-end gap-4">
                 <button 
@@ -852,9 +927,47 @@ const RecruiterDashboard: React.FC = () => {
                   </div>
                </div>
             </div>
+            
+            {/* Toolbar: Filters */}
+            <div className="px-6 py-4 border-b border-geek-border bg-gray-50 flex flex-wrap gap-4 items-center">
+               <div className="relative flex-1 min-w-[200px]">
+                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-geek-text" />
+                 <input 
+                   type="text" 
+                   value={filterTerm}
+                   onChange={(e) => setFilterTerm(e.target.value)}
+                   placeholder="Filtrar por nome ou email..." 
+                   className="w-full pl-9 pr-4 py-2 bg-white border border-geek-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-geek-blue transition-all"
+                 />
+               </div>
+               
+               <div className="flex items-center gap-2">
+                 <Filter className="w-4 h-4 text-geek-text" />
+                 <select
+                   value={filterStatus}
+                   onChange={(e) => setFilterStatus(e.target.value)}
+                   className="py-2 pl-3 pr-8 bg-white border border-geek-border rounded-lg text-sm text-geek-dark focus:outline-none focus:ring-1 focus:ring-geek-blue cursor-pointer"
+                 >
+                   <option value="all">Todas as Classificações</option>
+                   <option value="Alta Prioridade">Alta Prioridade</option>
+                   <option value="Considerar">Considerar</option>
+                   <option value="Baixa Prioridade">Baixa Prioridade</option>
+                 </select>
+               </div>
+            </div>
 
             {/* Content Table */}
-            <div className="flex-1 p-0 overflow-hidden">
+            <div className="flex-1 p-0 overflow-hidden relative">
+              {loading && (
+                <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-200">
+                   <div className="bg-geek-blue/10 p-4 rounded-full mb-4">
+                     <Loader2 className="w-10 h-10 text-geek-blue animate-spin" />
+                   </div>
+                   <h3 className="text-lg font-bold text-geek-dark">Processando Candidatos...</h3>
+                   <p className="text-geek-text text-sm mt-1">Nossa IA está analisando cada perfil.</p>
+                </div>
+              )}
+
               {candidates.length === 0 && !loading ? (
                 <div className="h-full flex flex-col items-center justify-center p-12 text-center">
                    <Users className="w-16 h-16 text-geek-gray mb-4" />
@@ -867,8 +980,18 @@ const RecruiterDashboard: React.FC = () => {
                     <thead className="bg-geek-gray">
                       <tr>
                         <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Candidato</th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider cursor-pointer hover:text-geek-dark transition-colors group">
-                          <div className="flex items-center gap-1">Score <ArrowUpDown className="w-3 h-3 opacity-50 group-hover:opacity-100"/></div>
+                        <th 
+                          scope="col" 
+                          onClick={toggleSort}
+                          className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider cursor-pointer hover:text-geek-dark transition-colors group select-none"
+                        >
+                          <div className="flex items-center gap-1">
+                            Score 
+                            {sortDirection === 'desc' 
+                              ? <ArrowDown className="w-3 h-3 text-geek-blue"/> 
+                              : <ArrowUp className="w-3 h-3 text-geek-blue"/>
+                            }
+                          </div>
                         </th>
                         <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Técnico</th>
                         <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Cultural</th>
@@ -877,78 +1000,86 @@ const RecruiterDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                      {candidates.map((candidate, idx) => {
-                        const isTopMatch = idx === 0 && (candidate.analysis?.overallScore || 0) > 85;
+                      {filteredAndSortedCandidates.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-8 text-center text-geek-text text-sm">
+                            Nenhum candidato encontrado com os filtros atuais.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredAndSortedCandidates.map((candidate, idx) => {
+                          const isTopMatch = idx === 0 && (candidate.analysis?.overallScore || 0) > 85 && sortDirection === 'desc' && filterTerm === '' && filterStatus === 'all';
 
-                        return (
-                          <tr 
-                            key={candidate.id} 
-                            onClick={() => setModalCandidate(candidate)}
-                            className={`cursor-pointer transition-all hover:bg-geek-gray/40 border-l-4 ${
-                              isTopMatch 
-                                ? 'bg-green-50/30 border-l-green-500' 
-                                : 'border-l-transparent'
-                            }`}
-                          >
-                            <td className="px-6 py-5 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-geek-text'}`}>
-                                  {candidate.name.charAt(0)}
+                          return (
+                            <tr 
+                              key={candidate.id} 
+                              onClick={() => setModalCandidate(candidate)}
+                              className={`cursor-pointer transition-all hover:bg-geek-gray/40 border-l-4 ${
+                                isTopMatch 
+                                  ? 'bg-green-50/30 border-l-green-500' 
+                                  : 'border-l-transparent'
+                              }`}
+                            >
+                              <td className="px-6 py-5 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${idx === 0 && sortDirection === 'desc' ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-geek-text'}`}>
+                                    {candidate.name.charAt(0)}
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-sm font-bold text-geek-dark">{candidate.name}</div>
+                                      {isTopMatch && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-100 text-green-700 tracking-wide">
+                                          <Sparkles className="w-3 h-3 mr-1 fill-green-500" />
+                                          Top
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-geek-text mt-0.5">{candidate.email}</div>
+                                  </div>
                                 </div>
-                                <div className="ml-4">
-                                  <div className="flex items-center gap-2">
-                                    <div className="text-sm font-bold text-geek-dark">{candidate.name}</div>
-                                    {isTopMatch && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-100 text-green-700 tracking-wide">
-                                        <Sparkles className="w-3 h-3 mr-1 fill-green-500" />
-                                        Top
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-xs text-geek-text mt-0.5">{candidate.email}</div>
+                              </td>
+                              <td className="px-6 py-5 whitespace-nowrap">
+                                <span className={`text-lg font-bold ${getScoreColor(candidate.analysis?.overallScore || 0)}`}>
+                                  {candidate.analysis?.overallScore}%
+                                </span>
+                              </td>
+                              <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
+                                <div className="flex flex-col gap-1 w-28">
+                                    <div className="flex justify-between text-xs font-medium text-geek-text">
+                                      <span>Técnico</span>
+                                      <span>{candidate.analysis?.technicalFit}%</span>
+                                    </div>
+                                    <div className="w-full bg-geek-border rounded-full h-1.5">
+                                      <div className="bg-geek-blue h-1.5 rounded-full" style={{ width: `${candidate.analysis?.technicalFit}%` }}></div>
+                                    </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-5 whitespace-nowrap">
-                              <span className={`text-lg font-bold ${getScoreColor(candidate.analysis?.overallScore || 0)}`}>
-                                {candidate.analysis?.overallScore}%
-                              </span>
-                            </td>
-                            <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
-                               <div className="flex flex-col gap-1 w-28">
-                                  <div className="flex justify-between text-xs font-medium text-geek-text">
-                                     <span>Técnico</span>
-                                     <span>{candidate.analysis?.technicalFit}%</span>
-                                  </div>
-                                  <div className="w-full bg-geek-border rounded-full h-1.5">
-                                    <div className="bg-geek-blue h-1.5 rounded-full" style={{ width: `${candidate.analysis?.technicalFit}%` }}></div>
-                                  </div>
-                               </div>
-                            </td>
-                            <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
-                               <div className="flex flex-col gap-1 w-28">
-                                  <div className="flex justify-between text-xs font-medium text-geek-text">
-                                     <span>Cultural</span>
-                                     <span>{candidate.analysis?.culturalFit}%</span>
-                                  </div>
-                                  <div className="w-full bg-geek-border rounded-full h-1.5">
-                                    <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${candidate.analysis?.culturalFit}%` }}></div>
-                                  </div>
-                               </div>
-                            </td>
-                            <td className="px-6 py-5 whitespace-nowrap">
-                              <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md border ${getBadgeColor(candidate.analysis?.recommendation || '')}`}>
-                                {candidate.analysis?.recommendation}
-                              </span>
-                            </td>
-                            <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                              <button className="text-geek-text hover:text-geek-blue transition-colors bg-white p-2 rounded-lg border border-transparent hover:border-geek-border shadow-sm">
-                                <ChevronRight className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                              </td>
+                              <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
+                                <div className="flex flex-col gap-1 w-28">
+                                    <div className="flex justify-between text-xs font-medium text-geek-text">
+                                      <span>Cultural</span>
+                                      <span>{candidate.analysis?.culturalFit}%</span>
+                                    </div>
+                                    <div className="w-full bg-geek-border rounded-full h-1.5">
+                                      <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${candidate.analysis?.culturalFit}%` }}></div>
+                                    </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-5 whitespace-nowrap">
+                                <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md border ${getBadgeColor(candidate.analysis?.recommendation || '')}`}>
+                                  {candidate.analysis?.recommendation}
+                                </span>
+                              </td>
+                              <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                                <button className="text-geek-text hover:text-geek-blue transition-colors bg-white p-2 rounded-lg border border-transparent hover:border-geek-border shadow-sm">
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>

@@ -37,7 +37,7 @@ export interface AnalysisHistoryItem {
 export interface CandidatePreferences {
   workModels: string[]; // O que o candidato aceita
   contractTypes: string[]; // O que o candidato aceita
-  salaryExpectation?: string;
+  salaryExpectation?: string; // Pretensão Salarial
 }
 
 export interface Candidate {
@@ -50,6 +50,11 @@ export interface Candidate {
   history?: AnalysisHistoryItem[];
   jobId?: string;
   preferences?: CandidatePreferences; // Novas preferências
+}
+
+export interface InterviewResult {
+  score: number;
+  feedback: string;
 }
 
 export enum UserRole {

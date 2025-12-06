@@ -57,6 +57,48 @@ const cleanJson = (text: string) => {
   return text.replace(/```json/g, '').replace(/```/g, '').trim();
 };
 
+export const extractTextFromFile = async (file: File): Promise<string> => {
+  if (!apiKey) throw new Error("API Key not found.");
+  const ai = new GoogleGenAI({ apiKey });
+
+  // Convert File to Base64
+  const base64Data = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      // Remove data URL prefix (e.g. "data:application/pdf;base64,")
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: file.type,
+              data: base64Data
+            }
+          },
+          {
+            text: "Extract all text content from this document. Return only the raw text content without any markdown formatting. If it is a resume, organize the sections clearly."
+          }
+        ]
+      }
+    });
+
+    return response.text || "";
+  } catch (error) {
+    console.error("Text extraction error:", error);
+    throw new Error("Falha ao ler o arquivo. Certifique-se que é um PDF ou Imagem válido e tente novamente.");
+  }
+};
+
 export const analyzeResume = async (job: Job, resumeText: string): Promise<AnalysisResult> => {
   if (!apiKey) {
     throw new Error("API Key not found. Please set process.env.API_KEY.");
@@ -217,7 +259,7 @@ export const runInterviewTurn = async (
   const ai = new GoogleGenAI({ apiKey });
 
   const systemInstruction = `
-    Você é um Recrutador Técnico Sênior na empresa TalentMatch.
+    Você é Alex, um Recrutador Técnico Sênior experiente na empresa TalentMatch.
     Você está entrevistando um candidato para a vaga de: ${jobContext.title} (${jobContext.department}).
     
     CONTEXTO DA VAGA:
@@ -235,7 +277,7 @@ export const runInterviewTurn = async (
     
     REGRAS DE INTERAÇÃO:
     1. Faça APENAS UMA pergunta por vez. Nunca faça várias perguntas na mesma mensagem.
-    2. Comece se apresentando brevemente e fazendo a primeira pergunta (técnica ou comportamental).
+    2. Comece se apresentando como Alex e fazendo a primeira pergunta (técnica ou comportamental).
     3. Quando o candidato responder, dê um feedback CURTO e CONSTRUTIVO sobre a resposta dele (ex: "Boa resposta, mostrou conhecimento em X", ou "Poderia ter sido mais específico sobre Y").
     4. Logo após o feedback, faça a próxima pergunta.
     5. Aumente a dificuldade gradualmente.
