@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Job } from '../types';
 import { runInterviewTurn } from '../services/geminiService';
@@ -96,7 +97,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                <div>
                  <h2 className="text-2xl font-bold text-geek-dark">Pronto para praticar?</h2>
                  <p className="text-geek-text max-w-md mx-auto mt-2">
-                   A IA irá atuar como o recrutador da {job.department}. Ela fará perguntas baseadas no seu currículo e na vaga. Você receberá feedback em tempo real.
+                   A IA irá atuar como o recrutador da {job.department}. Ela fará perguntas baseadas no seu currículo e nos detalhes técnicos da vaga (incluindo requisitos e diferenciais).
                  </p>
                </div>
                <button 

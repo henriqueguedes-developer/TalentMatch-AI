@@ -1,117 +1,135 @@
+
 import { Job } from './types';
+
+export const BRAZIL_STATES = [
+  { value: 'AC', label: 'Acre' },
+  { value: 'AL', label: 'Alagoas' },
+  { value: 'AP', label: 'Amapá' },
+  { value: 'AM', label: 'Amazonas' },
+  { value: 'BA', label: 'Bahia' },
+  { value: 'CE', label: 'Ceará' },
+  { value: 'DF', label: 'Distrito Federal' },
+  { value: 'ES', label: 'Espírito Santo' },
+  { value: 'GO', label: 'Goiás' },
+  { value: 'MA', label: 'Maranhão' },
+  { value: 'MT', label: 'Mato Grosso' },
+  { value: 'MS', label: 'Mato Grosso do Sul' },
+  { value: 'MG', label: 'Minas Gerais' },
+  { value: 'PA', label: 'Pará' },
+  { value: 'PB', label: 'Paraíba' },
+  { value: 'PR', label: 'Paraná' },
+  { value: 'PE', label: 'Pernambuco' },
+  { value: 'PI', label: 'Piauí' },
+  { value: 'RJ', label: 'Rio de Janeiro' },
+  { value: 'RN', label: 'Rio Grande do Norte' },
+  { value: 'RS', label: 'Rio Grande do Sul' },
+  { value: 'RO', label: 'Rondônia' },
+  { value: 'RR', label: 'Roraima' },
+  { value: 'SC', label: 'Santa Catarina' },
+  { value: 'SP', label: 'São Paulo' },
+  { value: 'SE', label: 'Sergipe' },
+  { value: 'TO', label: 'Tocantins' }
+];
 
 export const MOCK_JOBS: Job[] = [
   {
     id: '1',
-    title: 'Engenheiro de Software Senior (React/Node)',
+    title: 'Desenvolvedor(a) Full Stack Sênior – Tech Lead (.NET, Angular)',
     department: 'Engenharia',
-    location: 'São Paulo, SP',
-    type: 'Remoto',
-    description: 'Estamos em busca de uma pessoa Engenheira de Software Sênior para elevar o nível técnico do nosso time de Plataforma. Você atuará no desenvolvimento de soluções escaláveis para nosso SaaS, participando ativamente de decisões de arquitetura e design de sistemas. Além de codificar, esperamos que você atue como referência técnica, realizando Code Reviews criteriosos e mentoreando desenvolvedores plenos e júniores. Se você é apaixonado por Clean Code, testes automatizados e performance, seu lugar é aqui.',
+    location: { city: 'Joinville', state: 'SC' },
+    type: ['Híbrido', 'Presencial'],
+    contractType: ['PJ'],
+    description: `Estamos em busca de um(a) Desenvolvedor(a) Full Stack Sênior, com perfil Tech Lead, para liderar a construção de soluções robustas, escaláveis e de alta performance. Essa pessoa atuará em todo o ciclo de desenvolvimento de software — do levantamento à entrega.`,
+    responsibilities: [
+      'Atuar em todas as etapas do ciclo de vida do software: levantamento de requisitos, arquitetura, desenvolvimento, testes, CI/CD e deploy',
+      'Projetar e implementar arquiteturas escaláveis e resilientes, utilizando microserviços, APIs REST e GraphQL',
+      'Desenvolver interfaces modernas com Angular 12+ e TypeScript',
+      'Criar e manter APIs performáticas e seguras com .NET 7 a 9 (C#)',
+      'Monitorar e otimizar aplicações em produção (logs, métricas, tracing e APM)',
+      'Documentar boas práticas e padrões de arquitetura'
+    ],
     requirements: [
-      '5+ anos de experiência com JavaScript/TypeScript',
-      'Domínio avançado de React.js (Hooks, Context, Performance) e Node.js',
-      'Experiência comprovada com arquitetura de microsserviços e sistemas distribuídos',
-      'Vivência com Cloud Providers (AWS ou GCP) e ferramentas de CI/CD',
-      'Inglês avançado para leitura técnica e comunicação escrita'
-    ]
+      'Angular 12+ / TypeScript: arquitetura modular, RxJS, interceptors',
+      'C# / .NET 7–9: APIs REST, Entity Framework Core, LINQ avançado',
+      'SQL avançado (PostgreSQL ou SQL Server)',
+      'Docker / Docker Compose',
+      'CI/CD: automação completa de build, testes e deploy',
+      'Git: versionamento semântico, uso de PRs e fluxo GitFlow'
+    ],
+    differentials: [
+      'Experiência com MongoDB ou Redis',
+      'Vivência com cloud computing (AWS, Azure ou Google Cloud)',
+      'Arquitetura de microserviços',
+      'Segurança de aplicações web (OWASP, JWT)'
+    ],
+    softSkills: [
+      'Autodidata, com aprendizado e aplicação rápidos',
+      'Proativo, com atitude de dono e foco em resolver',
+      'Organizado, atento a versionamento, testes e documentação',
+      'Colaborativo, com boa comunicação entre áreas técnicas e de produto'
+    ],
+    schedule: 'Segunda a sexta-feira, das 8h às 12h e das 13h às 17h48'
   },
   {
     id: '2',
-    title: 'Product Manager',
+    title: 'Product Manager B2B',
     department: 'Produto',
-    location: 'Rio de Janeiro, RJ',
-    type: 'Híbrido',
-    description: 'Como Product Manager, você será o "CEO" do produto, liderando a estratégia desde a concepção até o lançamento (End-to-End). Você trabalhará em estreita colaboração com UX Designers e Engenheiros para resolver dores reais dos nossos clientes B2B. O dia a dia envolve muita análise de dados para tomada de decisão, condução de processos de Product Discovery e priorização de backlog baseada em valor de negócio. Buscamos alguém com visão analítica aguçada e excelente capacidade de comunicação com stakeholders.',
+    location: { city: 'Rio de Janeiro', state: 'RJ' },
+    type: ['Híbrido'],
+    contractType: ['CLT', 'PJ'],
+    description: 'Como Product Manager, você será o "CEO" do produto, liderando a estratégia desde a concepção até o lançamento (End-to-End). Você trabalhará em estreita colaboração com UX Designers e Engenheiros para resolver dores reais dos nossos clientes B2B.',
+    responsibilities: [
+      'Definir a visão e estratégia do produto',
+      'Gerenciar o backlog e priorizar features baseadas em valor',
+      'Conduzir processos de Product Discovery',
+      'Analisar métricas de uso e engajamento'
+    ],
     requirements: [
       '3+ anos de experiência como PM em produtos digitais B2B ou SaaS',
       'Domínio de metodologias ágeis e frameworks de priorização (RICE, WSJF)',
       'Forte capacidade analítica (SQL e análise de métricas de produto)',
       'Experiência com Discovery contínuo e entrevistas com usuários'
-    ]
+    ],
+    softSkills: [
+      'Excelente comunicação e capacidade de negociação',
+      'Liderança por influência',
+      'Pensamento analítico orientado a dados'
+    ],
+    schedule: 'Horário comercial flexível'
   },
   {
     id: '3',
     title: 'Analista de Dados Pleno',
     department: 'Data & Analytics',
-    location: 'Belo Horizonte, MG',
-    type: 'Presencial',
-    description: 'Junte-se ao nosso time de Data & Analytics para transformar dados brutos em insights estratégicos. Você será responsável por sustentar e evoluir nossos pipelines de dados e criar visualizações que empoderem as áreas de Marketing e Vendas. Buscamos um perfil proativo, que não apenas atenda demandas de relatórios, mas que investigue os dados para responder perguntas de negócio complexas ("Por que o churn aumentou?", "Qual o LTV por canal?").',
+    location: { city: 'Belo Horizonte', state: 'MG' },
+    type: ['Presencial'],
+    contractType: ['CLT'],
+    description: 'Junte-se ao nosso time de Data & Analytics para transformar dados brutos em insights estratégicos. Você será responsável por sustentar e evoluir nossos pipelines de dados.',
     requirements: [
       'Domínio de SQL para consultas complexas e otimização',
       'Experiência sólida com Python para manipulação de dados (Pandas/NumPy)',
-      'Experiência na construção de dashboards em PowerBI, Tableau ou Looker',
-      'Conhecimento de conceitos de Data Warehouse e modelagem dimensional'
+      'Experiência na construção de dashboards em PowerBI, Tableau ou Looker'
+    ],
+    responsibilities: [
+      'Manter e evoluir pipelines de dados (ETL/ELT)',
+      'Criar visualizações de dados para suporte à decisão',
+      'Garantir a qualidade e integridade dos dados'
     ]
   },
   {
     id: '4',
-    title: 'UX/UI Designer Senior',
-    department: 'Design',
-    location: 'Florianópolis, SC',
-    type: 'Remoto',
-    description: 'Buscamos um(a) UX/UI Designer Senior obcecado(a) pela experiência do usuário. Você liderará o design de novas features do nosso aplicativo mobile e web, garantindo consistência visual e usabilidade. Sua rotina incluirá desde a facilitação de workshops e pesquisas com usuários até a entrega de protótipos de alta fidelidade e handoff para os desenvolvedores. É essencial ter experiência na construção e manutenção de Design Systems.',
-    requirements: [
-      'Portfólio robusto com cases de UX (processo) e UI (visual)',
-      'Domínio avançado de Figma (Auto Layout, Components, Variables)',
-      'Experiência prévia na criação ou evolução de Design Systems',
-      'Conhecimento profundo de diretrizes de acessibilidade (WCAG)'
-    ]
-  },
-  {
-    id: '5',
-    title: 'DevOps Engineer',
-    department: 'Infraestrutura',
-    location: 'São Paulo, SP',
-    type: 'Remoto',
-    description: 'Estamos escalando nossa operação e precisamos de um DevOps Engineer para garantir que nossa infraestrutura suporte esse crescimento. Você focará na automação de infraestrutura (IaC), melhoria dos pipelines de CI/CD e na implementação de práticas de SRE e Observabilidade. O objetivo é reduzir o toil, melhorar o MTTR e garantir 99.9% de disponibilidade. Ambiente 100% Cloud Native.',
-    requirements: [
-      'Experiência sólida com AWS (EC2, ECS/EKS, RDS, VPC)',
-      'Domínio de orquestração de containers com Kubernetes',
-      'Infraestrutura como código usando Terraform ou CloudFormation',
-      'Experiência com ferramentas de monitoramento (Prometheus, Grafana, Datadog)'
-    ]
-  },
-  {
-    id: '6',
     title: 'Executivo de Vendas B2B (Closer)',
     department: 'Vendas',
-    location: 'São Paulo, SP',
-    type: 'Híbrido',
-    description: 'Você tem perfil Hunter e adora fechar negócios? Estamos expandindo nosso time comercial Enterprise. Sua missão será conduzir leads qualificados através do funil de vendas, realizar demonstrações de alto impacto, negociar contratos complexos e fechar parcerias estratégicas. Procuramos profissionais resilientes, com abordagem consultiva (Spin Selling/Challenger Sale) e fome de bater metas agressivas.',
+    location: { city: 'São Paulo', state: 'SP' },
+    type: ['Híbrido', 'Presencial'],
+    contractType: ['CLT'],
+    description: 'Você tem perfil Hunter e adora fechar negócios? Estamos expandindo nosso time comercial Enterprise.',
     requirements: [
-      'Experiência comprovada com vendas consultivas de software/SaaS (Ticket médio alto)',
+      'Experiência comprovada com vendas consultivas de software/SaaS',
       'Histórico consistente de superação de metas (Track Record)',
       'Excelente oratória, negociação e capacidade de contornar objeções',
       'Domínio de CRM (Salesforce, Pipedrive ou Hubspot)'
-    ]
-  },
-  {
-    id: '7',
-    title: 'Gerente de RH (Business Partner)',
-    department: 'Recursos Humanos',
-    location: 'Curitiba, PR',
-    type: 'Presencial',
-    description: 'Atue como o braço direito das lideranças executivas, conectando a estratégia de negócios às pessoas. Como HRBP, você será responsável por desenhar e implementar programas de desenvolvimento de liderança, gestão de performance (Avaliação de Desempenho/PDI) e sucessão. Além disso, atuará na mediação de conflitos e na manutenção da nossa cultura organizacional durante nosso período de hipercrescimento.',
-    requirements: [
-      'Experiência generalista em RH com atuação consultiva (BP)',
-      'Vivência anterior em empresas de tecnologia ou startups em crescimento',
-      'Conhecimento sólido em legislação trabalhista e relações sindicais',
-      'Forte inteligência emocional e capacidade de influenciar stakeholders'
-    ]
-  },
-  {
-    id: '8',
-    title: 'Analista Financeiro Pleno',
-    department: 'Financeiro',
-    location: 'São Paulo, SP',
-    type: 'Híbrido',
-    description: 'Estamos estruturando nossa área de FP&A e buscamos um analista para liderar o controle orçamentário e a modelagem financeira. Você preparará relatórios gerenciais mensais para a diretoria e investidores, analisando variações entre orçado x realizado (Budget vs Actual). É uma oportunidade incrível para quem gosta de construir processos e ter visibilidade junto ao C-Level.',
-    requirements: [
-      'Formação superior em Economia, Administração, Engenharia ou Contabilidade',
-      'Excel Avançado é mandatório (VBA/Macros); Power BI é um diferencial',
-      'Experiência prévia com FP&A, Controladoria ou Planejamento Financeiro',
-      'Inglês intermediário/avançado'
-    ]
+    ],
+    schedule: 'Comercial'
   }
 ];

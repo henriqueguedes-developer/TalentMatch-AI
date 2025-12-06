@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { Job, AnalysisResult } from "../types";
 
@@ -5,8 +6,8 @@ const apiKey = process.env.API_KEY;
 
 // Use 'gemini-2.5-flash' for fast, efficient analysis.
 const MODEL_NAME = "gemini-2.5-flash";
-// Use 'gemini-3-pro-preview' for complex reasoning/chat.
-const CHAT_MODEL_NAME = "gemini-3-pro-preview";
+// Use 'gemini-2.5-flash' for chat to avoid preview model instability
+const CHAT_MODEL_NAME = "gemini-2.5-flash";
 
 const analysisSchema: Schema = {
   type: Type.OBJECT,
@@ -71,13 +72,18 @@ export const analyzeResume = async (job: Job, resumeText: string): Promise<Analy
     VAGA:
     Título: ${job.title}
     Departamento: ${job.department}
-    Descrição: ${job.description}
-    Requisitos: ${job.requirements.join(", ")}
+    Descrição Geral: ${job.description}
+    Responsabilidades: ${job.responsibilities?.join("; ") || "Não especificado"}
+    Requisitos Obrigatórios: ${job.requirements.join("; ")}
+    Diferenciais (Desejável): ${job.differentials?.join("; ") || "Nenhum"}
+    Soft Skills (Comportamental): ${job.softSkills?.join("; ") || "Não especificado"}
 
     CANDIDATO (Texto do Currículo):
     ${resumeText}
 
     Analise profundamente a experiência, habilidades técnicas, soft skills e o contexto da carreira do candidato em relação à vaga.
+    Considere os Requisitos Obrigatórios como peso maior, e os Diferenciais como bônus.
+    Para o 'Cultural Fit', analise a seção 'Soft Skills' da vaga.
     
     IMPORTANTE:
     No campo 'improvementTips', aja como um mentor de carreira. Dê conselhos extremamente práticos e acionáveis sobre o que falta para ele chegar a 100% de aderência. Cite tecnologias específicas, metodologias ou tipos de projetos que ele precisa adicionar ao portfólio.
@@ -138,7 +144,9 @@ export const findBestMatches = async (resumeText: string, jobs: Job[]): Promise<
   const jobsSummary = jobs.map(j => ({
     id: j.id,
     title: j.title,
-    requirements: j.requirements
+    requirements: j.requirements,
+    city: j.location.city,
+    state: j.location.state
   }));
 
   const prompt = `
@@ -214,7 +222,10 @@ export const runInterviewTurn = async (
     
     CONTEXTO DA VAGA:
     ${jobContext.description}
-    Requisitos: ${jobContext.requirements.join(', ')}
+    Responsabilidades: ${jobContext.responsibilities?.join("; ") || "Não especificado"}
+    Requisitos Obrigatórios: ${jobContext.requirements.join('; ')}
+    Diferenciais: ${jobContext.differentials?.join("; ") || "Nenhum"}
+    Soft Skills: ${jobContext.softSkills?.join("; ") || "Não especificado"}
 
     RESUMO DO CANDIDATO:
     ${resumeContext.substring(0, 2000)}
@@ -228,18 +239,24 @@ export const runInterviewTurn = async (
     3. Quando o candidato responder, dê um feedback CURTO e CONSTRUTIVO sobre a resposta dele (ex: "Boa resposta, mostrou conhecimento em X", ou "Poderia ter sido mais específico sobre Y").
     4. Logo após o feedback, faça a próxima pergunta.
     5. Aumente a dificuldade gradualmente.
-    6. Mantenha um tom profissional, mas encorajador.
+    6. Tente explorar tanto os Requisitos quanto os Diferenciais se o candidato demonstrar conhecimento.
+    7. Mantenha um tom profissional, mas encorajador.
   `;
   
-  const chat = ai.chats.create({
-    model: CHAT_MODEL_NAME,
-    history: history,
-    config: {
-      temperature: 0.6,
-      systemInstruction: systemInstruction
-    }
-  });
+  try {
+    const chat = ai.chats.create({
+      model: CHAT_MODEL_NAME,
+      history: history,
+      config: {
+        temperature: 0.6,
+        systemInstruction: systemInstruction
+      }
+    });
 
-  const result = await chat.sendMessage({ message });
-  return result.text || "Erro na simulação.";
+    const result = await chat.sendMessage({ message });
+    return result.text || "Erro na simulação.";
+  } catch (e: any) {
+     console.error("Interview error", e);
+     return `Erro ao processar entrevista: ${e.message}`;
+  }
 };

@@ -10,7 +10,7 @@ const CandidatePortal: React.FC = () => {
   const { jobs, addApplication } = useAppContext();
 
   // State for flow control
-  const [step, setStep] = useState<'upload' | 'results' | 'detail'>('upload');
+  const [step, setStep] = useState<'upload' | 'results' | 'detail' | 'preferences'>('upload');
   
   // Data state
   const [resumeText, setResumeText] = useState('');
@@ -19,6 +19,12 @@ const CandidatePortal: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   
+  // Preferences State
+  const [preferences, setPreferences] = useState<{workModels: string[], contractTypes: string[]}>({
+    workModels: [],
+    contractTypes: []
+  });
+
   // UI/Loading state
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -90,6 +96,21 @@ const CandidatePortal: React.FC = () => {
     }
   };
 
+  const handlePreApply = () => {
+    setStep('preferences');
+  }
+
+  const togglePreference = (field: 'workModels' | 'contractTypes', value: string) => {
+    setPreferences(prev => {
+        const current = prev[field];
+        if (current.includes(value)) {
+            return { ...prev, [field]: current.filter(i => i !== value) };
+        } else {
+            return { ...prev, [field]: [...current, value] };
+        }
+    });
+  }
+
   const handleApply = () => {
     if (!selectedJob || !analysisResult) return;
     setIsApplying(true);
@@ -103,12 +124,14 @@ const CandidatePortal: React.FC = () => {
         fileName: fileName || 'curriculo.pdf',
         resumeText: resumeText,
         analysis: analysisResult,
-        jobId: selectedJob.id
+        jobId: selectedJob.id,
+        preferences: preferences // Save preferences
       };
       
       addApplication(newCandidate);
       
       setIsApplying(false);
+      setStep('detail'); // Go back to detail to show success
       setApplicationSuccess(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 1500);
@@ -331,10 +354,10 @@ const CandidatePortal: React.FC = () => {
 
                       <div className="flex items-center gap-4 mb-4 text-xs font-semibold text-geek-text">
                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-4 h-4" /> {job.location}
+                            <MapPin className="w-4 h-4" /> {job.location.city}, {job.location.state}
                          </div>
                          <div className="flex items-center gap-1.5">
-                            <Building2 className="w-4 h-4" /> {job.type}
+                            <Building2 className="w-4 h-4" /> {job.type.join('/')}
                          </div>
                       </div>
 
@@ -355,6 +378,79 @@ const CandidatePortal: React.FC = () => {
                 })}
              </div>
            )}
+        </div>
+      )}
+
+      {/* STEP 4: PREFERENCES (New Step) */}
+      {step === 'preferences' && selectedJob && (
+        <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500">
+           <button 
+            onClick={() => setStep('detail')}
+            className="mb-8 flex items-center gap-2 text-geek-text hover:text-geek-blue transition-colors font-bold text-sm bg-white px-4 py-2 rounded-lg border border-geek-border shadow-sm w-fit"
+          >
+            <ChevronLeft className="w-4 h-4" /> Voltar
+          </button>
+          
+          <div className="bg-white rounded-2xl shadow-card border border-geek-border p-8">
+              <h2 className="text-2xl font-bold text-geek-dark mb-2">Preferências de Trabalho</h2>
+              <p className="text-geek-text mb-8">Para finalizar sua candidatura na vaga de <strong>{selectedJob.title}</strong>, selecione o que se encaixa no seu perfil.</p>
+
+              <div className="space-y-6">
+                 <div>
+                    <label className="block font-bold text-geek-dark mb-3">Quais modelos de trabalho você aceita?</label>
+                    <div className="flex flex-wrap gap-3">
+                        {['Presencial', 'Híbrido', 'Remoto'].map(option => (
+                            <button
+                                key={option}
+                                onClick={() => togglePreference('workModels', option)}
+                                className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-all ${
+                                    preferences.workModels.includes(option)
+                                    ? 'bg-geek-blue text-white border-geek-blue'
+                                    : 'bg-white text-geek-text border-geek-border hover:border-geek-blue'
+                                }`}
+                            >
+                                {option}
+                            </button>
+                        ))}
+                    </div>
+                 </div>
+
+                 <div>
+                    <label className="block font-bold text-geek-dark mb-3">Quais tipos de contrato você aceita?</label>
+                    <div className="flex flex-wrap gap-3">
+                        {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
+                            <button
+                                key={option}
+                                onClick={() => togglePreference('contractTypes', option)}
+                                className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-all ${
+                                    preferences.contractTypes.includes(option)
+                                    ? 'bg-geek-blue text-white border-geek-blue'
+                                    : 'bg-white text-geek-text border-geek-border hover:border-geek-blue'
+                                }`}
+                            >
+                                {option}
+                            </button>
+                        ))}
+                    </div>
+                 </div>
+              </div>
+
+              <button 
+                onClick={handleApply}
+                disabled={isApplying || preferences.workModels.length === 0 || preferences.contractTypes.length === 0}
+                className="mt-10 w-full bg-geek-blue hover:bg-geek-blueHover text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1 flex items-center justify-center gap-3 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isApplying ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" /> Enviando...
+                    </>
+                ) : (
+                    <>
+                      Confirmar Candidatura <Send className="w-5 h-5" />
+                    </>
+                )}
+              </button>
+          </div>
         </div>
       )}
 
@@ -383,13 +479,23 @@ const CandidatePortal: React.FC = () => {
 
           <div className="bg-white rounded-2xl border border-geek-border p-8 mb-8 shadow-card">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-                <h1 className="text-3xl font-bold text-geek-dark">{selectedJob.title}</h1>
-                <div className="flex gap-2">
-                   <span className="px-4 py-1.5 bg-geek-gray rounded-lg text-sm font-bold text-geek-text border border-geek-border">{selectedJob.department}</span>
-                   <span className="px-4 py-1.5 bg-geek-gray rounded-lg text-sm font-bold text-geek-text border border-geek-border">{selectedJob.type}</span>
+                <div>
+                    <h1 className="text-3xl font-bold text-geek-dark mb-2">{selectedJob.title}</h1>
+                    <div className="flex items-center gap-4 text-geek-text text-sm">
+                        <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {selectedJob.location.city}, {selectedJob.location.state}</span>
+                        <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {selectedJob.type.join(' / ')}</span>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                    <span className="px-4 py-1.5 bg-geek-gray rounded-lg text-sm font-bold text-geek-text border border-geek-border">{selectedJob.department}</span>
+                    <div className="flex gap-2">
+                        {selectedJob.contractType.map(c => (
+                            <span key={c} className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-md text-xs font-bold uppercase">{c}</span>
+                        ))}
+                    </div>
                 </div>
              </div>
-             <p className="text-geek-text leading-relaxed text-lg max-w-5xl">{selectedJob.description}</p>
+             <p className="text-geek-text leading-relaxed text-lg max-w-5xl whitespace-pre-line">{selectedJob.description}</p>
           </div>
 
           <AnalysisCard result={analysisResult} />
@@ -405,19 +511,10 @@ const CandidatePortal: React.FC = () => {
                      Simular Entrevista
                   </button>
                   <button 
-                    onClick={handleApply}
-                    disabled={isApplying}
-                    className="bg-geek-blue hover:bg-geek-blueHover text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1 flex items-center gap-3 text-lg disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto justify-center"
+                    onClick={handlePreApply}
+                    className="bg-geek-blue hover:bg-geek-blueHover text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1 flex items-center gap-3 text-lg w-full md:w-auto justify-center"
                   >
-                    {isApplying ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" /> Processando...
-                        </>
-                    ) : (
-                        <>
-                          Confirmar Candidatura <Send className="w-5 h-5" />
-                        </>
-                    )}
+                     Candidatar-se <ArrowRight className="w-5 h-5" />
                   </button>
                </>
              ) : (

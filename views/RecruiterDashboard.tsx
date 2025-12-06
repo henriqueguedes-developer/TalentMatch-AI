@@ -1,9 +1,11 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Job, Candidate } from '../types';
 import { analyzeResume } from '../services/geminiService';
 import AnalysisCard from '../components/AnalysisCard';
 import { useAppContext } from '../contexts/AppContext';
-import { Search, Users, Loader2, Filter, ChevronRight, ArrowUpDown, History, TrendingUp, TrendingDown, Minus, Sparkles, Plus, Save, X, UploadCloud, FileText, Mail, File } from 'lucide-react';
+import { BRAZIL_STATES } from '../constants';
+import { Search, Users, Loader2, Filter, ChevronRight, ArrowUpDown, History, Sparkles, Plus, Save, X, UploadCloud, FileText, Mail, MapPin, Briefcase, ListChecks, Star, BrainCircuit, Clock } from 'lucide-react';
 
 const RecruiterDashboard: React.FC = () => {
   const { jobs, addJob, applications } = useAppContext();
@@ -19,15 +21,31 @@ const RecruiterDashboard: React.FC = () => {
   const [isAddingCandidate, setIsAddingCandidate] = useState(false);
 
   // Form state for new job
-  const [newJobData, setNewJobData] = useState<Partial<Job>>({
+  const [newJobData, setNewJobData] = useState<{
+    title: string;
+    department: string;
+    city: string;
+    state: string;
+    type: string[];
+    contractType: string[];
+    description: string;
+    schedule: string;
+  }>({
     title: '',
     department: '',
-    location: '',
-    type: 'Presencial',
+    city: '',
+    state: '',
+    type: [],
+    contractType: [],
     description: '',
-    requirements: []
+    schedule: ''
   });
+  
+  // Text area inputs for lists
   const [requirementsInput, setRequirementsInput] = useState('');
+  const [responsibilitiesInput, setResponsibilitiesInput] = useState('');
+  const [differentialsInput, setDifferentialsInput] = useState('');
+  const [softSkillsInput, setSoftSkillsInput] = useState('');
 
   // Form state for manual candidate
   const [manualCandidate, setManualCandidate] = useState({
@@ -53,16 +71,26 @@ const RecruiterDashboard: React.FC = () => {
   }, [selectedJob, applications]);
 
   const handleCreateJob = () => {
-    if (!newJobData.title || !newJobData.description) return;
+    if (!newJobData.title || !newJobData.description || !newJobData.state) return;
+
+    const parseList = (text: string) => text.split('\n').filter(r => r.trim() !== '');
 
     const newJob: Job = {
       id: Date.now().toString(),
-      title: newJobData.title || 'Nova Vaga',
+      title: newJobData.title,
       department: newJobData.department || 'Geral',
-      location: newJobData.location || 'Remoto',
-      type: (newJobData.type as 'Presencial' | 'Remoto' | 'Híbrido') || 'Remoto',
-      description: newJobData.description || '',
-      requirements: requirementsInput.split('\n').filter(r => r.trim() !== '')
+      location: {
+        city: newJobData.city,
+        state: newJobData.state
+      },
+      type: newJobData.type.length > 0 ? newJobData.type : ['Presencial'],
+      contractType: newJobData.contractType.length > 0 ? newJobData.contractType : ['CLT'],
+      description: newJobData.description,
+      schedule: newJobData.schedule,
+      requirements: parseList(requirementsInput),
+      responsibilities: parseList(responsibilitiesInput),
+      differentials: parseList(differentialsInput),
+      softSkills: parseList(softSkillsInput),
     };
 
     addJob(newJob);
@@ -71,8 +99,23 @@ const RecruiterDashboard: React.FC = () => {
     setCandidates([]);
     
     // Reset form
-    setNewJobData({ title: '', department: '', location: '', type: 'Presencial', description: '', requirements: [] });
+    setNewJobData({ title: '', department: '', city: '', state: '', type: [], contractType: [], description: '', schedule: '' });
     setRequirementsInput('');
+    setResponsibilitiesInput('');
+    setDifferentialsInput('');
+    setSoftSkillsInput('');
+  };
+
+  const toggleSelection = (field: 'type' | 'contractType', value: string) => {
+    setNewJobData(prev => {
+      const current = prev[field];
+      const exists = current.includes(value);
+      if (exists) {
+        return { ...prev, [field]: current.filter(item => item !== value) };
+      } else {
+        return { ...prev, [field]: [...current, value] };
+      }
+    });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,11 +158,10 @@ const RecruiterDashboard: React.FC = () => {
         analysis,
         jobId: selectedJob.id
       };
+      
+      const { addApplication } = useAppContext(); 
+      addApplication(newCandidate);
 
-      setCandidates(prev => {
-        const updated = [...prev, newCandidate];
-        return updated.sort((a, b) => (b.analysis?.overallScore || 0) - (a.analysis?.overallScore || 0));
-      });
       setIsAddingCandidate(false);
       setManualCandidate({ name: '', email: '', resumeText: '', fileName: '' });
     } catch (error) {
@@ -153,16 +195,6 @@ const RecruiterDashboard: React.FC = () => {
         email: 'ana.souza@email.com',
         fileName: 'Ana_Souza_Resume.docx',
         resumeText: `Formada em Marketing. Fiz um bootcamp de React há 6 meses. Tenho experiência com vendas e atendimento ao cliente. Busco primeira oportunidade como dev junior.`
-      },
-      {
-        id: 'c3',
-        name: 'Roberto Mendes',
-        email: 'roberto@email.com',
-        fileName: 'RobertoMendes_TechLead.pdf',
-        resumeText: `Tech Lead com 10 anos de mercado. Java, Spring Boot, Angular e AWS. Foco em arquitetura corporativa e gestão de times grandes. Pouca experiência recente com React.`,
-        history: [
-          { date: '20/02/2024', overallScore: 60, recommendation: 'Baixa Prioridade' }
-        ]
       }
     ];
 
@@ -222,9 +254,11 @@ const RecruiterDashboard: React.FC = () => {
 
               <AnalysisCard result={analysisView.analysis} />
               
+              {/* History Table */}
               {analysisView.history && analysisView.history.length > 0 && (
                 <div className="mt-8 bg-white rounded-xl shadow-card border border-geek-border overflow-hidden">
-                  <div className="p-6 border-b border-geek-border">
+                   {/* ... (Previous history code) ... */}
+                   <div className="p-6 border-b border-geek-border">
                     <h3 className="text-lg font-bold text-geek-dark flex items-center gap-2">
                       <History className="w-5 h-5 text-geek-blue" />
                       Histórico de Análises
@@ -234,17 +268,12 @@ const RecruiterDashboard: React.FC = () => {
                     <thead className="bg-geek-gray">
                       <tr>
                         <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Data</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Score Anterior</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Score</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Classificação</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Evolução</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 bg-white">
-                      {analysisView.history.map((item, idx) => {
-                        const currentScore = analysisView.analysis!.overallScore;
-                        const diff = currentScore - item.overallScore;
-                        
-                        return (
+                      {analysisView.history.map((item, idx) => (
                           <tr key={idx} className="hover:bg-geek-gray/30">
                             <td className="px-6 py-4 text-sm text-geek-dark font-medium">{item.date}</td>
                             <td className="px-6 py-4 text-sm font-bold text-geek-text">{item.overallScore}%</td>
@@ -253,28 +282,38 @@ const RecruiterDashboard: React.FC = () => {
                                 {item.recommendation}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm">
-                              <div className="flex items-center gap-2">
-                                {diff > 0 ? (
-                                  <span className="text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded-md font-bold text-xs">
-                                    <TrendingUp className="w-3 h-3" /> +{diff}%
-                                  </span>
-                                ) : diff < 0 ? (
-                                  <span className="text-red-600 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md font-bold text-xs">
-                                    <TrendingDown className="w-3 h-3" /> {diff}%
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md font-bold text-xs">
-                                    <Minus className="w-3 h-3" /> 0%
-                                  </span>
-                                )}
-                              </div>
-                            </td>
                           </tr>
-                        );
-                      })}
+                        ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+              
+              {/* Preferences Section (New) */}
+              {analysisView.preferences && (
+                <div className="mt-8 bg-white p-6 rounded-xl border border-geek-border shadow-card">
+                  <h3 className="font-bold mb-4 text-geek-dark flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-geek-blue" />
+                    Preferências do Candidato
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <span className="text-xs font-bold text-geek-text uppercase">Modelos de Trabalho</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {analysisView.preferences.workModels.map(m => (
+                          <span key={m} className="px-2 py-1 bg-gray-100 rounded text-sm text-gray-700">{m}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-geek-text uppercase">Tipos de Contrato</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {analysisView.preferences.contractTypes.map(c => (
+                          <span key={c} className="px-2 py-1 bg-gray-100 rounded text-sm text-gray-700">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -332,15 +371,19 @@ const RecruiterDashboard: React.FC = () => {
                     </div>
                  </div>
                  
-                 <div className="flex items-center gap-4 p-4 bg-geek-gray rounded-xl border border-geek-border">
-                    <div className="bg-white p-2 rounded-lg text-geek-blue">
-                      <File className="w-5 h-5" />
-                    </div>
-                    <div>
-                       <p className="text-xs text-geek-text uppercase font-bold tracking-wider">Currículo</p>
-                       <p className="text-geek-dark font-medium break-all">{modalCandidate.fileName || 'N/A'}</p>
-                    </div>
-                 </div>
+                 {modalCandidate.preferences && (
+                   <div className="p-4 bg-geek-gray rounded-xl border border-geek-border">
+                      <p className="text-xs text-geek-text uppercase font-bold tracking-wider mb-2">Preferências</p>
+                      <div className="flex flex-wrap gap-2">
+                        {modalCandidate.preferences.workModels.map(m => (
+                          <span key={m} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600">{m}</span>
+                        ))}
+                        {modalCandidate.preferences.contractTypes.map(c => (
+                          <span key={c} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600">{c}</span>
+                        ))}
+                      </div>
+                   </div>
+                 )}
 
                  {modalCandidate.analysis && (
                    <div className="pt-2">
@@ -415,9 +458,11 @@ const RecruiterDashboard: React.FC = () => {
                 }`}
               >
                 <h3 className={`font-semibold text-sm ${selectedJob?.id === job.id ? 'text-geek-blue' : 'text-geek-dark'}`}>{job.title}</h3>
-                <p className="text-xs text-geek-text mt-1 font-medium">{job.department} • {job.location}</p>
-                <div className="mt-2.5">
-                   <span className="text-[10px] uppercase font-bold bg-geek-gray text-geek-text px-2 py-1 rounded-md">{job.type}</span>
+                <p className="text-xs text-geek-text mt-1 font-medium">{job.department} • {job.location.city}/{job.location.state}</p>
+                <div className="mt-2.5 flex flex-wrap gap-1">
+                   {job.type.map(t => (
+                      <span key={t} className="text-[10px] uppercase font-bold bg-geek-gray text-geek-text px-2 py-1 rounded-md">{t}</span>
+                   ))}
                 </div>
               </div>
             ))}
@@ -436,75 +481,175 @@ const RecruiterDashboard: React.FC = () => {
               </button>
             </div>
             
-            <div className="space-y-6">
-              {/* Job Form Inputs */}
-              <div>
-                <label className="block text-sm font-bold text-geek-dark mb-2">Título da Vaga</label>
-                <input 
-                  type="text" 
-                  value={newJobData.title}
-                  onChange={(e) => setNewJobData({...newJobData, title: e.target.value})}
-                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                  placeholder="Ex: Designer UX/UI"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-8">
+              {/* Basic Info Section */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-bold text-geek-dark border-l-4 border-geek-blue pl-3">Informações Básicas</h3>
+                
                 <div>
-                  <label className="block text-sm font-bold text-geek-dark mb-2">Departamento</label>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Título da Vaga</label>
                   <input 
                     type="text" 
-                    value={newJobData.department}
-                    onChange={(e) => setNewJobData({...newJobData, department: e.target.value})}
+                    value={newJobData.title}
+                    onChange={(e) => setNewJobData({...newJobData, title: e.target.value})}
                     className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                    placeholder="Ex: Produto"
+                    placeholder="Ex: Desenvolvedor(a) Full Stack Sênior"
                   />
                 </div>
-                 <div>
-                  <label className="block text-sm font-bold text-geek-dark mb-2">Modelo de Trabalho</label>
-                  <select 
-                    value={newJobData.type}
-                    onChange={(e) => setNewJobData({...newJobData, type: e.target.value as any})}
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-geek-dark mb-2">Departamento</label>
+                    <input 
+                      type="text" 
+                      value={newJobData.department}
+                      onChange={(e) => setNewJobData({...newJobData, department: e.target.value})}
+                      className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                      placeholder="Ex: Engenharia"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-geek-dark mb-2">Horário de Trabalho</label>
+                    <input 
+                      type="text" 
+                      value={newJobData.schedule}
+                      onChange={(e) => setNewJobData({...newJobData, schedule: e.target.value})}
+                      className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                      placeholder="Ex: Seg-Sex, 08h às 17h"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                     <label className="block text-sm font-bold text-geek-dark mb-2">Cidade</label>
+                     <input 
+                        type="text" 
+                        value={newJobData.city}
+                        onChange={(e) => setNewJobData({...newJobData, city: e.target.value})}
+                        className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                        placeholder="São Paulo"
+                      />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-bold text-geek-dark mb-2">Estado</label>
+                     <select
+                        value={newJobData.state}
+                        onChange={(e) => setNewJobData({...newJobData, state: e.target.value})}
+                        className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                      >
+                        <option value="">Selecione...</option>
+                        {BRAZIL_STATES.map(s => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div>
+                      <label className="block text-sm font-bold text-geek-dark mb-2">Modelo de Trabalho</label>
+                      <div className="space-y-2 bg-geek-gray p-3 rounded-lg border border-geek-border">
+                         {['Presencial', 'Híbrido', 'Remoto'].map(option => (
+                           <label key={option} className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={newJobData.type.includes(option)}
+                                onChange={() => toggleSelection('type', option)}
+                                className="w-4 h-4 text-geek-blue rounded border-geek-border focus:ring-geek-blue"
+                              />
+                              <span className="text-sm text-geek-dark">{option}</span>
+                           </label>
+                         ))}
+                      </div>
+                   </div>
+                   <div>
+                      <label className="block text-sm font-bold text-geek-dark mb-2">Tipo de Contrato</label>
+                      <div className="space-y-2 bg-geek-gray p-3 rounded-lg border border-geek-border">
+                         {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
+                           <label key={option} className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={newJobData.contractType.includes(option)}
+                                onChange={() => toggleSelection('contractType', option)}
+                                className="w-4 h-4 text-geek-blue rounded border-geek-border focus:ring-geek-blue"
+                              />
+                              <span className="text-sm text-geek-dark">{option}</span>
+                           </label>
+                         ))}
+                      </div>
+                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Descrição da Vaga</label>
+                  <textarea 
+                    rows={4}
+                    value={newJobData.description}
+                    onChange={(e) => setNewJobData({...newJobData, description: e.target.value})}
                     className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                  >
-                    <option value="Presencial">Presencial</option>
-                    <option value="Híbrido">Híbrido</option>
-                    <option value="Remoto">Remoto</option>
-                  </select>
+                    placeholder="Visão geral e contexto da oportunidade..."
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-geek-dark mb-2">Localização</label>
-                <input 
-                  type="text" 
-                  value={newJobData.location}
-                  onChange={(e) => setNewJobData({...newJobData, location: e.target.value})}
-                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                  placeholder="Ex: São Paulo, SP"
-                />
-              </div>
+              {/* Requirements & Details Section */}
+              <div className="space-y-6 pt-6 border-t border-geek-border">
+                <h3 className="text-lg font-bold text-geek-dark border-l-4 border-geek-blue pl-3">Detalhes Técnicos & Perfil</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
+                       <ListChecks className="w-4 h-4 text-geek-blue" /> Responsabilidades (um por linha)
+                    </label>
+                    <textarea 
+                      rows={5}
+                      value={responsibilitiesInput}
+                      onChange={(e) => setResponsibilitiesInput(e.target.value)}
+                      className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
+                      placeholder="- Liderar equipe&#10;- Desenvolver APIs"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
+                      <BrainCircuit className="w-4 h-4 text-red-500" /> Requisitos Obrigatórios (um por linha)
+                    </label>
+                    <textarea 
+                      rows={5}
+                      value={requirementsInput}
+                      onChange={(e) => setRequirementsInput(e.target.value)}
+                      className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
+                      placeholder="- Angular 12+&#10;- C# Avançado"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-bold text-geek-dark mb-2">Descrição da Vaga</label>
-                <textarea 
-                  rows={4}
-                  value={newJobData.description}
-                  onChange={(e) => setNewJobData({...newJobData, description: e.target.value})}
-                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                  placeholder="Descreva as responsabilidades e o contexto da vaga..."
-                />
-              </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
+                      <Star className="w-4 h-4 text-yellow-500" /> Diferenciais / Bônus (um por linha)
+                    </label>
+                    <textarea 
+                      rows={5}
+                      value={differentialsInput}
+                      onChange={(e) => setDifferentialsInput(e.target.value)}
+                      className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
+                      placeholder="- Conhecimento em AWS&#10;- Redis"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-bold text-geek-dark mb-2">Requisitos (um por linha)</label>
-                <textarea 
-                  rows={4}
-                  value={requirementsInput}
-                  onChange={(e) => setRequirementsInput(e.target.value)}
-                  className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
-                  placeholder="- Experiência com Figma&#10;- Conhecimento em Design System"
-                />
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
+                      <Users className="w-4 h-4 text-purple-500" /> Soft Skills / Comportamental (um por linha)
+                    </label>
+                    <textarea 
+                      rows={5}
+                      value={softSkillsInput}
+                      onChange={(e) => setSoftSkillsInput(e.target.value)}
+                      className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
+                      placeholder="- Proatividade&#10;- Boa comunicação"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="pt-6 border-t border-geek-border flex justify-end gap-4">
@@ -527,6 +672,7 @@ const RecruiterDashboard: React.FC = () => {
           </div>
         ) : isAddingCandidate ? (
           <div className="bg-white rounded-xl shadow-card border border-geek-border p-8 animate-in fade-in slide-in-from-bottom-4">
+            {/* Same candidate form, just keeping the structure correct */}
             <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
               <div>
                 <h2 className="text-2xl font-bold text-geek-dark">Adicionar Candidato</h2>
@@ -541,6 +687,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-8">
+               {/* ... (Keep existing candidate input fields) ... */}
               <div className="grid grid-cols-2 gap-6">
                  <div>
                   <label className="block text-sm font-bold text-geek-dark mb-2">Nome Completo</label>
@@ -563,7 +710,8 @@ const RecruiterDashboard: React.FC = () => {
                   />
                  </div>
               </div>
-
+               
+               {/* Upload Section */}
               <div>
                 <label className="block text-sm font-bold text-geek-dark mb-3">Upload do Currículo</label>
                 {!manualCandidate.fileName ? (
@@ -604,7 +752,8 @@ const RecruiterDashboard: React.FC = () => {
                   </div>
                 )}
               </div>
-
+               
+               {/* Extracted Text */}
               {manualCandidate.resumeText && !loading && (
                  <div>
                     <label className="block text-sm font-bold text-geek-dark mb-2">Conteúdo Extraído (Editável)</label>
@@ -647,17 +796,47 @@ const RecruiterDashboard: React.FC = () => {
             {/* Header Vaga */}
             <div className="p-8 border-b border-geek-border bg-white rounded-t-xl">
                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                        <h1 className="text-2xl font-bold text-geek-dark">{selectedJob.title}</h1>
                        <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded uppercase">Ativa</span>
                     </div>
-                    <p className="text-geek-text max-w-2xl line-clamp-2">{selectedJob.description}</p>
+                    
+                    <div className="flex flex-wrap gap-4 text-geek-text text-sm mb-4">
+                        <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {selectedJob.location.city}, {selectedJob.location.state}</span>
+                        <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {selectedJob.type.join(' / ')}</span>
+                        {selectedJob.schedule && (
+                          <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {selectedJob.schedule}</span>
+                        )}
+                    </div>
+                    
+                    <p className="text-geek-text max-w-3xl whitespace-pre-line mb-6">{selectedJob.description}</p>
+                    
+                    {/* Collapsible or Grid for extra details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm bg-geek-gray/30 p-4 rounded-lg border border-geek-border">
+                       <div>
+                          <h4 className="font-bold text-geek-dark mb-1 flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> Requisitos</h4>
+                          <ul className="list-disc pl-4 text-geek-text space-y-0.5">
+                             {selectedJob.requirements.slice(0, 3).map((r, i) => <li key={i}>{r}</li>)}
+                             {selectedJob.requirements.length > 3 && <li>...e mais {selectedJob.requirements.length - 3}</li>}
+                          </ul>
+                       </div>
+                       {selectedJob.responsibilities && (
+                        <div>
+                            <h4 className="font-bold text-geek-dark mb-1 flex items-center gap-1"><ListChecks className="w-3 h-3"/> Responsabilidades</h4>
+                            <ul className="list-disc pl-4 text-geek-text space-y-0.5">
+                              {selectedJob.responsibilities.slice(0, 3).map((r, i) => <li key={i}>{r}</li>)}
+                              {selectedJob.responsibilities.length > 3 && <li>...e mais {selectedJob.responsibilities.length - 3}</li>}
+                            </ul>
+                        </div>
+                       )}
+                    </div>
                   </div>
-                  <div className="flex gap-3 shrink-0">
+
+                  <div className="flex gap-3 shrink-0 flex-col md:flex-row">
                     <button 
                       onClick={() => setIsAddingCandidate(true)}
-                      className="flex items-center gap-2 bg-white border border-geek-border hover:bg-geek-gray text-geek-dark px-4 py-2.5 rounded-lg font-semibold transition-colors shadow-sm"
+                      className="flex items-center justify-center gap-2 bg-white border border-geek-border hover:bg-geek-gray text-geek-dark px-4 py-2.5 rounded-lg font-semibold transition-colors shadow-sm"
                     >
                       <Plus className="w-4 h-4" />
                       Add Candidato
@@ -665,7 +844,7 @@ const RecruiterDashboard: React.FC = () => {
                     <button 
                       onClick={simulateBatchProcessing}
                       disabled={loading}
-                      className="flex items-center gap-2 bg-geek-dark hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 shadow-soft"
+                      className="flex items-center justify-center gap-2 bg-geek-dark hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 shadow-soft"
                     >
                       {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <Users className="w-4 h-4" />}
                       {loading ? "Processando..." : "Simular Processo"}
