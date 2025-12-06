@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { Job, AnalysisResult } from "../types";
+import { Job, AnalysisResult, InterviewResult, CandidatePreferences } from "../types";
 
 const apiKey = process.env.API_KEY;
 
@@ -52,6 +52,21 @@ const analysisSchema: Schema = {
   required: ["overallScore", "technicalFit", "culturalFit", "summary", "strengths", "weaknesses", "improvementTips", "recommendation"],
 };
 
+const interviewEvalSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    score: {
+      type: Type.NUMBER,
+      description: "Pontuação de 0 a 100 do desempenho do candidato na entrevista.",
+    },
+    feedback: {
+      type: Type.STRING,
+      description: "Um feedback conciso (max 3 linhas) explicando a nota, destacando pontos positivos e o que faltou.",
+    },
+  },
+  required: ["score", "feedback"],
+};
+
 // Helper to clean JSON response from markdown blocks
 const cleanJson = (text: string) => {
   return text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -99,12 +114,36 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
   }
 };
 
-export const analyzeResume = async (job: Job, resumeText: string): Promise<AnalysisResult> => {
+export const analyzeResume = async (
+  job: Job, 
+  resumeText: string, 
+  preferences?: CandidatePreferences
+): Promise<AnalysisResult> => {
   if (!apiKey) {
     throw new Error("API Key not found. Please set process.env.API_KEY.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
+
+  let preferencesContext = "";
+  if (preferences) {
+    preferencesContext = `
+    PREFERÊNCIAS OBRIGATÓRIAS DO CANDIDATO (FATORES CRÍTICOS):
+    - Pretensão Salarial: R$ ${preferences.salaryExpectation}
+    - Budget da Vaga: ${job.salaryRange}
+    - Modelos Aceitos pelo Candidato: ${preferences.workModels.join(', ')}
+    - Modelo da Vaga: ${job.type.join(', ')}
+    - Contratos Aceitos: ${preferences.contractTypes.join(', ')}
+
+    REGRA RÍGIDA DE PONTUAÇÃO (MATCH FINANCEIRO E ESTRUTURAL):
+    1. MATCH SALARIAL: Compare o valor numérico da pretensão salarial com o budget da vaga.
+       - Se a pretensão for maior que o limite superior da vaga em mais de 10%: SUBTRAIA IMEDIATAMENTE 20 PONTOS do 'overallScore' e adicione "Incompatibilidade Salarial" em 'weaknesses'.
+       - Se a pretensão for muito acima (>30%), classifique automaticamente como "Baixa Prioridade".
+    
+    2. MATCH DE MODELO E CONTRATO:
+       - Se não houver interseção entre os Modelos de Trabalho (ex: Candidato só aceita Remoto e vaga é 100% Presencial), o 'overallScore' NÃO DEVE PASSAR DE 40. Classifique como "Baixa Prioridade" e cite "Incompatibilidade de Modelo de Trabalho".
+    `;
+  }
 
   const prompt = `
     Você é um especialista em Recrutamento e Seleção utilizando Inteligência Artificial.
@@ -114,18 +153,28 @@ export const analyzeResume = async (job: Job, resumeText: string): Promise<Analy
     VAGA:
     Título: ${job.title}
     Departamento: ${job.department}
+    Localização: ${job.location.city} / ${job.location.state}
     Descrição Geral: ${job.description}
     Responsabilidades: ${job.responsibilities?.join("; ") || "Não especificado"}
     Requisitos Obrigatórios: ${job.requirements.join("; ")}
     Diferenciais (Desejável): ${job.differentials?.join("; ") || "Nenhum"}
     Soft Skills (Comportamental): ${job.softSkills?.join("; ") || "Não especificado"}
+    Faixa Salarial Oferecida: ${job.salaryRange}
+    Modelo de Trabalho da Vaga: ${job.type.join(', ')}
+    Contrato da Vaga: ${job.contractType.join(', ')}
+
+    ${preferencesContext}
 
     CANDIDATO (Texto do Currículo):
     ${resumeText}
 
+    CRITÉRIOS DE PONTUAÇÃO (Pesos Sugeridos):
+    - 35%: Hard Skills e Requisitos Obrigatórios.
+    - 25%: Experiência Profissional relevante.
+    - 30%: Compatibilidade (Salário, Localização, Modelo de Trabalho) - SEJA RIGOROSO AQUI.
+    - 10%: Soft Skills e Cultura.
+
     Analise profundamente a experiência, habilidades técnicas, soft skills e o contexto da carreira do candidato em relação à vaga.
-    Considere os Requisitos Obrigatórios como peso maior, e os Diferenciais como bônus.
-    Para o 'Cultural Fit', analise a seção 'Soft Skills' da vaga.
     
     IMPORTANTE:
     No campo 'improvementTips', aja como um mentor de carreira. Dê conselhos extremamente práticos e acionáveis sobre o que falta para ele chegar a 100% de aderência. Cite tecnologias específicas, metodologias ou tipos de projetos que ele precisa adicionar ao portfólio.
@@ -302,3 +351,54 @@ export const runInterviewTurn = async (
      return `Erro ao processar entrevista: ${e.message}`;
   }
 };
+
+export const evaluateInterview = async (
+  history: {role: 'user' | 'model', parts: {text: string}[]}[],
+  jobContext: Job
+): Promise<InterviewResult> => {
+    if (!apiKey) {
+        throw new Error("API Key not found.");
+    }
+    const ai = new GoogleGenAI({ apiKey });
+
+    // Format chat history into a string
+    const transcript = history.map(msg => `${msg.role.toUpperCase()}: ${msg.parts[0].text}`).join('\n');
+
+    const prompt = `
+      Você é um avaliador de entrevistas técnicas.
+      
+      Analise a transcrição da entrevista abaixo para a vaga de "${jobContext.title}".
+      O candidato respondeu a perguntas feitas por um recrutador de IA.
+      
+      TRANSCRICAO:
+      ${transcript}
+      
+      Avalie o candidato com base em:
+      1. Clareza e comunicação.
+      2. Profundidade técnica nas respostas (se houve perguntas técnicas).
+      3. Comportamento e profissionalismo.
+      
+      Retorne um JSON com:
+      - score: Nota de 0 a 100.
+      - feedback: Um resumo curto justificando a nota.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: MODEL_NAME,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: interviewEvalSchema
+            }
+        });
+        
+        const jsonText = response.text;
+        if (!jsonText) throw new Error("No response");
+        
+        return JSON.parse(cleanJson(jsonText)) as InterviewResult;
+    } catch (error) {
+        console.error("Evaluation error", error);
+        return { score: 0, feedback: "Erro ao avaliar entrevista." };
+    }
+}

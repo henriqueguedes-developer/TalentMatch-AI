@@ -1,11 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Job, Candidate } from '../types';
+import { Job, Candidate, CandidatePreferences } from '../types';
 import { analyzeResume, extractTextFromFile } from '../services/geminiService';
 import AnalysisCard from '../components/AnalysisCard';
 import { useAppContext } from '../contexts/AppContext';
 import { BRAZIL_STATES } from '../constants';
-import { Search, Users, Loader2, Filter, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, History, Sparkles, Plus, Save, X, UploadCloud, FileText, Mail, MapPin, Briefcase, ListChecks, Star, BrainCircuit, Clock, DollarSign } from 'lucide-react';
+import { Search, Users, Loader2, Filter, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, History, Sparkles, Plus, Save, X, UploadCloud, FileText, Mail, MapPin, Briefcase, ListChecks, Star, BrainCircuit, Clock, DollarSign, MessageSquare } from 'lucide-react';
 
 const RecruiterDashboard: React.FC = () => {
   const { jobs, addJob, applications, addApplication } = useAppContext();
@@ -35,6 +35,8 @@ const RecruiterDashboard: React.FC = () => {
     contractType: string[];
     description: string;
     schedule: string;
+    salaryRange: string;
+    interviewRequired: boolean;
   }>({
     title: '',
     department: '',
@@ -43,7 +45,9 @@ const RecruiterDashboard: React.FC = () => {
     type: [],
     contractType: [],
     description: '',
-    schedule: ''
+    schedule: '',
+    salaryRange: '',
+    interviewRequired: false
   });
   
   // Text area inputs for lists
@@ -53,11 +57,22 @@ const RecruiterDashboard: React.FC = () => {
   const [softSkillsInput, setSoftSkillsInput] = useState('');
 
   // Form state for manual candidate
-  const [manualCandidate, setManualCandidate] = useState({
+  const [manualCandidate, setManualCandidate] = useState<{
+    name: string;
+    email: string;
+    resumeText: string;
+    fileName: string;
+    salaryExpectation: string;
+    workModels: string[];
+    contractTypes: string[];
+  }>({
     name: '',
     email: '',
     resumeText: '',
-    fileName: ''
+    fileName: '',
+    salaryExpectation: '',
+    workModels: [],
+    contractTypes: []
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,7 +127,7 @@ const RecruiterDashboard: React.FC = () => {
   }, [candidates, filterTerm, filterStatus, sortDirection]);
 
   const handleCreateJob = () => {
-    if (!newJobData.title || !newJobData.description || !newJobData.state) return;
+    if (!newJobData.title || !newJobData.description || !newJobData.state || !newJobData.salaryRange) return;
 
     const parseList = (text: string) => text.split('\n').filter(r => r.trim() !== '');
 
@@ -128,6 +143,8 @@ const RecruiterDashboard: React.FC = () => {
       contractType: newJobData.contractType.length > 0 ? newJobData.contractType : ['CLT'],
       description: newJobData.description,
       schedule: newJobData.schedule,
+      salaryRange: newJobData.salaryRange,
+      interviewRequired: newJobData.interviewRequired,
       requirements: parseList(requirementsInput),
       responsibilities: parseList(responsibilitiesInput),
       differentials: parseList(differentialsInput),
@@ -140,7 +157,7 @@ const RecruiterDashboard: React.FC = () => {
     setCandidates([]);
     
     // Reset form
-    setNewJobData({ title: '', department: '', city: '', state: '', type: [], contractType: [], description: '', schedule: '' });
+    setNewJobData({ title: '', department: '', city: '', state: '', type: [], contractType: [], description: '', schedule: '', salaryRange: '', interviewRequired: false });
     setRequirementsInput('');
     setResponsibilitiesInput('');
     setDifferentialsInput('');
@@ -158,6 +175,17 @@ const RecruiterDashboard: React.FC = () => {
       }
     });
   };
+
+  const toggleManualSelection = (field: 'workModels' | 'contractTypes', value: string) => {
+    setManualCandidate(prev => {
+        const current = prev[field];
+        if (current.includes(value)) {
+            return { ...prev, [field]: current.filter(i => i !== value) };
+        } else {
+            return { ...prev, [field]: [...current, value] };
+        }
+    });
+  }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -190,11 +218,24 @@ const RecruiterDashboard: React.FC = () => {
   };
 
   const handleManualCandidateSubmit = async () => {
-    if (!selectedJob || !manualCandidate.resumeText) return;
+    if (!selectedJob || !manualCandidate.resumeText || !manualCandidate.name) return;
+    
+    // Validate salary presence for manual entry if job has salary
+    if (!manualCandidate.salaryExpectation) {
+        alert("Pretensão Salarial é obrigatória para análise de match.");
+        return;
+    }
 
     setLoading(true);
     try {
-      const analysis = await analyzeResume(selectedJob, manualCandidate.resumeText);
+      const preferences: CandidatePreferences = {
+          salaryExpectation: manualCandidate.salaryExpectation,
+          workModels: manualCandidate.workModels,
+          contractTypes: manualCandidate.contractTypes
+      };
+
+      const analysis = await analyzeResume(selectedJob, manualCandidate.resumeText, preferences);
+      
       const newCandidate: Candidate = {
         id: `m${Date.now()}`,
         name: manualCandidate.name,
@@ -202,14 +243,15 @@ const RecruiterDashboard: React.FC = () => {
         fileName: manualCandidate.fileName,
         resumeText: manualCandidate.resumeText,
         analysis,
-        jobId: selectedJob.id
+        jobId: selectedJob.id,
+        preferences: preferences
       };
       
       // Use function from context that is now passed as prop or imported
       addApplication(newCandidate);
 
       setIsAddingCandidate(false);
-      setManualCandidate({ name: '', email: '', resumeText: '', fileName: '' });
+      setManualCandidate({ name: '', email: '', resumeText: '', fileName: '', salaryExpectation: '', workModels: [], contractTypes: [] });
     } catch (error) {
       alert("Erro na análise. Tente novamente.");
     } finally {
@@ -338,54 +380,6 @@ const RecruiterDashboard: React.FC = () => {
                   </table>
                 </div>
               )}
-              
-              {/* Preferences Section (New) */}
-              {analysisView.preferences && (
-                <div className="mt-8 bg-white p-6 rounded-xl border border-geek-border shadow-card">
-                  <h3 className="font-bold mb-4 text-geek-dark flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-geek-blue" />
-                    Preferências do Candidato
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <span className="text-xs font-bold text-geek-text uppercase">Modelos de Trabalho</span>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {analysisView.preferences.workModels.map(m => (
-                          <span key={m} className="px-2 py-1 bg-gray-100 rounded text-sm text-gray-700">{m}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-geek-text uppercase">Tipos de Contrato</span>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {analysisView.preferences.contractTypes.map(c => (
-                          <span key={c} className="px-2 py-1 bg-gray-100 rounded text-sm text-gray-700">{c}</span>
-                        ))}
-                      </div>
-                    </div>
-                     {analysisView.preferences.salaryExpectation && (
-                       <div>
-                          <span className="text-xs font-bold text-geek-text uppercase">Pretensão Salarial</span>
-                          <p className="flex items-center gap-1 mt-2 text-geek-dark font-bold text-lg">
-                             <span className="text-xs text-geek-text">R$</span> {analysisView.preferences.salaryExpectation}
-                          </p>
-                       </div>
-                     )}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-8 bg-white p-6 rounded-xl border border-geek-border shadow-card">
-                  <h3 className="font-bold mb-4 text-geek-dark flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-geek-blue" />
-                    Currículo Original
-                  </h3>
-                  <div className="bg-geek-gray/50 rounded-lg p-6 border border-geek-border">
-                    <p className="text-geek-text font-mono text-sm whitespace-pre-line leading-relaxed">
-                      {analysisView.resumeText}
-                    </p>
-                  </div>
-              </div>
           </div>
       )
   }
@@ -396,8 +390,8 @@ const RecruiterDashboard: React.FC = () => {
       {/* Modal Style Detail */}
       {modalCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-geek-dark/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-100 transition-all border border-geek-border">
-            <div className="flex justify-between items-center p-6 border-b border-geek-border bg-gray-50/50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-100 transition-all border border-geek-border max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-geek-border bg-gray-50/50 sticky top-0 bg-opacity-95 backdrop-blur">
                <h3 className="text-lg font-bold text-geek-dark">Detalhes do Candidato</h3>
                <button 
                  onClick={() => setModalCandidate(null)}
@@ -429,27 +423,53 @@ const RecruiterDashboard: React.FC = () => {
                     </div>
                  </div>
                  
+                 {/* Preferences and Salary Match */}
                  {modalCandidate.preferences && (
-                   <div className="p-4 bg-geek-gray rounded-xl border border-geek-border">
-                      <p className="text-xs text-geek-text uppercase font-bold tracking-wider mb-2">Preferências</p>
-                      <div className="flex flex-wrap gap-2">
-                        {modalCandidate.preferences.workModels.map(m => (
-                          <span key={m} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600">{m}</span>
-                        ))}
-                        {modalCandidate.preferences.contractTypes.map(c => (
-                          <span key={c} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600">{c}</span>
-                        ))}
+                   <div className="p-4 bg-geek-gray rounded-xl border border-geek-border space-y-3">
+                      <div>
+                        <p className="text-xs text-geek-text uppercase font-bold tracking-wider mb-2">Preferências</p>
+                        <div className="flex flex-wrap gap-2">
+                          {modalCandidate.preferences.workModels.map(m => (
+                            <span key={m} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600 font-medium">{m}</span>
+                          ))}
+                          {modalCandidate.preferences.contractTypes.map(c => (
+                            <span key={c} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600 font-medium">{c}</span>
+                          ))}
+                        </div>
                       </div>
-                      {modalCandidate.preferences.salaryExpectation && (
+                      
+                      {modalCandidate.preferences.salaryExpectation && selectedJob?.salaryRange && (
                          <div className="mt-3 pt-3 border-t border-geek-border/50">
-                            <span className="text-xs font-bold text-geek-text uppercase">Pretensão Salarial</span>
-                            <p className="font-bold text-geek-dark text-lg flex items-center gap-1">
-                               <span className="text-xs text-geek-text">R$</span>
-                               {modalCandidate.preferences.salaryExpectation}
-                            </p>
+                            <span className="text-xs font-bold text-geek-text uppercase flex items-center gap-1"><DollarSign className="w-3 h-3"/> Alinhamento Salarial</span>
+                            <div className="flex justify-between items-center mt-2 bg-white p-2 rounded border border-gray-200">
+                               <div className="text-right">
+                                  <p className="text-xs text-geek-text">Pretensão</p>
+                                  <p className="font-bold text-geek-dark">R$ {modalCandidate.preferences.salaryExpectation}</p>
+                               </div>
+                               <div className="text-gray-300">vs</div>
+                               <div>
+                                  <p className="text-xs text-geek-text">Budget da Vaga</p>
+                                  <p className="font-bold text-green-600">{selectedJob.salaryRange}</p>
+                               </div>
+                            </div>
                          </div>
                       )}
                    </div>
+                 )}
+
+                 {/* Interview Score Details */}
+                 {modalCandidate.interviewResult && (
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <div className="flex justify-between items-center mb-2">
+                           <span className="text-xs font-bold text-blue-800 uppercase flex items-center gap-1">
+                             <MessageSquare className="w-3 h-3"/> Entrevista Simulada
+                           </span>
+                           <span className="text-lg font-bold text-blue-800">{modalCandidate.interviewResult.score}/100</span>
+                        </div>
+                        <p className="text-sm text-blue-900 leading-relaxed bg-white/50 p-2 rounded">
+                          "{modalCandidate.interviewResult.feedback}"
+                        </p>
+                    </div>
                  )}
 
                  {modalCandidate.analysis && (
@@ -471,7 +491,7 @@ const RecruiterDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-6 border-t border-geek-border bg-gray-50/50 flex justify-end gap-3">
+            <div className="p-6 border-t border-geek-border bg-gray-50/50 flex justify-end gap-3 sticky bottom-0">
                <button 
                   onClick={() => setModalCandidate(null)}
                   className="px-5 py-2.5 text-geek-text hover:bg-geek-gray rounded-lg font-semibold text-sm transition-colors"
@@ -577,14 +597,17 @@ const RecruiterDashboard: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-geek-dark mb-2">Horário de Trabalho</label>
-                    <input 
-                      type="text" 
-                      value={newJobData.schedule}
-                      onChange={(e) => setNewJobData({...newJobData, schedule: e.target.value})}
-                      className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                      placeholder="Ex: Seg-Sex, 08h às 17h"
-                    />
+                    <label className="block text-sm font-bold text-geek-dark mb-2">Faixa Salarial (Obrigatório)</label>
+                    <div className="relative">
+                        <span className="absolute left-3 top-3.5 text-geek-text text-sm font-bold">R$</span>
+                        <input 
+                        type="text" 
+                        value={newJobData.salaryRange}
+                        onChange={(e) => setNewJobData({...newJobData, salaryRange: e.target.value})}
+                        className="w-full pl-10 p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
+                        placeholder="Ex: 8.000 - 12.000"
+                        />
+                    </div>
                   </div>
                 </div>
 
@@ -631,20 +654,34 @@ const RecruiterDashboard: React.FC = () => {
                          ))}
                       </div>
                    </div>
-                   <div>
-                      <label className="block text-sm font-bold text-geek-dark mb-2">Tipo de Contrato</label>
-                      <div className="space-y-2 bg-geek-gray p-3 rounded-lg border border-geek-border">
-                         {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
-                           <label key={option} className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                checked={newJobData.contractType.includes(option)}
-                                onChange={() => toggleSelection('contractType', option)}
-                                className="w-4 h-4 text-geek-blue rounded border-geek-border focus:ring-geek-blue"
-                              />
-                              <span className="text-sm text-geek-dark">{option}</span>
-                           </label>
-                         ))}
+                   <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-geek-dark mb-2">Tipo de Contrato</label>
+                        <div className="space-y-2 bg-geek-gray p-3 rounded-lg border border-geek-border">
+                            {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
+                            <label key={option} className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    checked={newJobData.contractType.includes(option)}
+                                    onChange={() => toggleSelection('contractType', option)}
+                                    className="w-4 h-4 text-geek-blue rounded border-geek-border focus:ring-geek-blue"
+                                />
+                                <span className="text-sm text-geek-dark">{option}</span>
+                            </label>
+                            ))}
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                         <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newJobData.interviewRequired}
+                              onChange={(e) => setNewJobData({...newJobData, interviewRequired: e.target.checked})}
+                              className="w-4 h-4 text-geek-blue rounded border-geek-border focus:ring-geek-blue"
+                            />
+                            <span className="text-sm font-bold text-blue-900">Exigir Entrevista Simulada com IA</span>
+                         </label>
+                         <p className="text-xs text-blue-700 mt-1 pl-6">Candidatos serão incentivados a responder 5 perguntas técnicas.</p>
                       </div>
                    </div>
                 </div>
@@ -729,7 +766,7 @@ const RecruiterDashboard: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleCreateJob}
-                  disabled={!newJobData.title || !newJobData.description}
+                  disabled={!newJobData.title || !newJobData.description || !newJobData.salaryRange}
                   className="px-6 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 shadow-soft"
                 >
                   <Save className="w-4 h-4" />
@@ -740,8 +777,8 @@ const RecruiterDashboard: React.FC = () => {
           </div>
         ) : isAddingCandidate ? (
           <div className="bg-white rounded-xl shadow-card border border-geek-border p-8 animate-in fade-in slide-in-from-bottom-4">
-            {/* Same candidate form, just keeping the structure correct */}
-            <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
+             {/* ... Keep the same Add Candidate Logic, just ensure layout consistency ... */}
+             <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
               <div>
                 <h2 className="text-2xl font-bold text-geek-dark">Adicionar Candidato</h2>
                 <div className="flex items-center gap-2 mt-1">
@@ -753,10 +790,10 @@ const RecruiterDashboard: React.FC = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
+            
             <div className="space-y-8">
-               {/* ... (Keep existing candidate input fields) ... */}
-              <div className="grid grid-cols-2 gap-6">
+               {/* Candidate Input Fields */}
+               <div className="grid grid-cols-2 gap-6">
                  <div>
                   <label className="block text-sm font-bold text-geek-dark mb-2">Nome Completo</label>
                   <input 
@@ -778,7 +815,65 @@ const RecruiterDashboard: React.FC = () => {
                   />
                  </div>
               </div>
-               
+
+               {/* Manual Preferences Section */}
+               <div className="bg-gray-50 p-6 rounded-xl border border-geek-border">
+                  <h4 className="text-sm font-bold text-geek-dark uppercase mb-4 flex items-center gap-2">
+                     <ListChecks className="w-4 h-4 text-geek-blue"/> Preferências do Candidato
+                  </h4>
+                  <div className="space-y-4">
+                     <div>
+                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Pretensão Salarial (Obrigatório)</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-3 text-geek-text font-bold text-xs">R$</span>
+                            <input 
+                              type="text" 
+                              value={manualCandidate.salaryExpectation}
+                              onChange={(e) => setManualCandidate({...manualCandidate, salaryExpectation: e.target.value})}
+                              className="w-full pl-8 p-2 bg-white border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:outline-none text-sm"
+                              placeholder="0,00"
+                            />
+                        </div>
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Modelos Aceitos</label>
+                        <div className="flex flex-wrap gap-2">
+                            {['Presencial', 'Híbrido', 'Remoto'].map(option => (
+                                <button
+                                    key={option}
+                                    onClick={() => toggleManualSelection('workModels', option)}
+                                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                                        manualCandidate.workModels.includes(option)
+                                        ? 'bg-geek-blue text-white border-geek-blue'
+                                        : 'bg-white text-geek-text border-geek-border hover:border-geek-blue'
+                                    }`}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Contratos Aceitos</label>
+                        <div className="flex flex-wrap gap-2">
+                            {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
+                                <button
+                                    key={option}
+                                    onClick={() => toggleManualSelection('contractTypes', option)}
+                                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                                        manualCandidate.contractTypes.includes(option)
+                                        ? 'bg-geek-blue text-white border-geek-blue'
+                                        : 'bg-white text-geek-text border-geek-border hover:border-geek-blue'
+                                    }`}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
                {/* Upload Section */}
               <div>
                 <label className="block text-sm font-bold text-geek-dark mb-3">Upload do Currículo</label>
@@ -820,26 +915,7 @@ const RecruiterDashboard: React.FC = () => {
                   </div>
                 )}
               </div>
-               
-               {/* Extracted Text */}
-              {manualCandidate.resumeText && !loading && (
-                 <div>
-                    <label className="block text-sm font-bold text-geek-dark mb-2">Conteúdo Extraído (Editável)</label>
-                    <textarea 
-                      value={manualCandidate.resumeText}
-                      onChange={(e) => setManualCandidate({...manualCandidate, resumeText: e.target.value})}
-                      className="w-full h-40 p-4 text-sm bg-geek-gray border border-geek-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-geek-blue/20"
-                    />
-                 </div>
-              )}
               
-              {loading && (
-                <div className="bg-geek-gray border border-geek-border rounded-xl p-6 flex flex-col items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-geek-blue animate-spin mb-2" />
-                    <p className="text-geek-dark font-semibold">Lendo documento...</p>
-                </div>
-              )}
-
               <div className="pt-6 border-t border-geek-border flex justify-end gap-4">
                 <button 
                   onClick={() => setIsAddingCandidate(false)}
@@ -849,7 +925,7 @@ const RecruiterDashboard: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleManualCandidateSubmit}
-                  disabled={loading || !manualCandidate.resumeText || !manualCandidate.name}
+                  disabled={loading || !manualCandidate.resumeText || !manualCandidate.name || !manualCandidate.salaryExpectation}
                   className="px-6 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 shadow-soft"
                 >
                    {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
@@ -875,19 +951,22 @@ const RecruiterDashboard: React.FC = () => {
                     <div className="flex items-center gap-3 mb-2">
                        <h1 className="text-2xl font-bold text-geek-dark">{selectedJob.title}</h1>
                        <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded uppercase">Ativa</span>
+                       {selectedJob.interviewRequired && (
+                         <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded uppercase flex items-center gap-1">
+                           <MessageSquare className="w-3 h-3"/> Entrevista Req.
+                         </span>
+                       )}
                     </div>
                     
                     <div className="flex flex-wrap gap-4 text-geek-text text-sm mb-4">
                         <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {selectedJob.location.city}, {selectedJob.location.state}</span>
                         <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {selectedJob.type.join(' / ')}</span>
-                        {selectedJob.schedule && (
-                          <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {selectedJob.schedule}</span>
-                        )}
+                        <span className="flex items-center gap-1"><DollarSign className="w-4 h-4" /> {selectedJob.salaryRange}</span>
                     </div>
                     
                     <p className="text-geek-text max-w-3xl whitespace-pre-line mb-6">{selectedJob.description}</p>
                     
-                    {/* Collapsible or Grid for extra details */}
+                    {/* Details Snippet */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm bg-geek-gray/30 p-4 rounded-lg border border-geek-border">
                        <div>
                           <h4 className="font-bold text-geek-dark mb-1 flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> Requisitos</h4>
@@ -995,6 +1074,7 @@ const RecruiterDashboard: React.FC = () => {
                         </th>
                         <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Técnico</th>
                         <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Cultural</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Score Entrevista</th>
                         <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Status</th>
                         <th scope="col" className="relative px-6 py-4"><span className="sr-only">Ações</span></th>
                       </tr>
@@ -1002,7 +1082,7 @@ const RecruiterDashboard: React.FC = () => {
                     <tbody className="bg-white divide-y divide-gray-100">
                       {filteredAndSortedCandidates.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-6 py-8 text-center text-geek-text text-sm">
+                          <td colSpan={7} className="px-6 py-8 text-center text-geek-text text-sm">
                             Nenhum candidato encontrado com os filtros atuais.
                           </td>
                         </tr>
@@ -1065,6 +1145,18 @@ const RecruiterDashboard: React.FC = () => {
                                       <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${candidate.analysis?.culturalFit}%` }}></div>
                                     </div>
                                 </div>
+                              </td>
+                              <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
+                                {candidate.interviewResult ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-sm font-bold ${candidate.interviewResult.score >= 70 ? 'text-green-600' : 'text-orange-500'}`}>
+                                            {candidate.interviewResult.score}
+                                        </span>
+                                        <span className="text-xs text-geek-text">/ 100</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-xs text-gray-400 italic">Pendente</span>
+                                )}
                               </td>
                               <td className="px-6 py-5 whitespace-nowrap">
                                 <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md border ${getBadgeColor(candidate.analysis?.recommendation || '')}`}>

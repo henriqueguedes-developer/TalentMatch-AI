@@ -1,11 +1,11 @@
 
 import React, { useState, useRef } from 'react';
-import { Job, AnalysisResult, Candidate } from '../types';
+import { Job, AnalysisResult, Candidate, InterviewResult } from '../types';
 import { analyzeResume, findBestMatches, JobMatch, extractTextFromFile } from '../services/geminiService';
 import AnalysisCard from '../components/AnalysisCard';
 import InterviewModal from '../components/InterviewModal';
 import { useAppContext } from '../contexts/AppContext';
-import { FileText, Loader2, CheckCircle2, UploadCloud, X, ArrowRight, Briefcase, Search, ChevronLeft, Send, Edit2, MapPin, Building2, Mic2, AlertTriangle, DollarSign } from 'lucide-react';
+import { FileText, Loader2, CheckCircle2, UploadCloud, X, ArrowRight, Briefcase, Search, ChevronLeft, Send, Edit2, MapPin, Building2, Mic2, AlertTriangle, DollarSign, Lock } from 'lucide-react';
 
 const CandidatePortal: React.FC = () => {
   const { jobs, addApplication } = useAppContext();
@@ -19,6 +19,7 @@ const CandidatePortal: React.FC = () => {
   const [matches, setMatches] = useState<JobMatch[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [interviewResult, setInterviewResult] = useState<InterviewResult | null>(null);
   
   // Preferences State
   const [preferences, setPreferences] = useState<{workModels: string[], contractTypes: string[], salaryExpectation: string}>({
@@ -90,6 +91,7 @@ const CandidatePortal: React.FC = () => {
 
     setSelectedJob(job);
     setApplicationSuccess(false); // Reset app status
+    setInterviewResult(null); // Reset previous interview
     setLoading(true);
     setLoadingMessage(`Calculando aderência para ${job.title}...`);
 
@@ -105,6 +107,11 @@ const CandidatePortal: React.FC = () => {
   };
 
   const handlePreApply = () => {
+    // Double check logic for security, though UI is disabled
+    if (selectedJob?.interviewRequired && !interviewResult) {
+        alert("Esta vaga exige a realização da entrevista simulada.");
+        return;
+    }
     setStep('preferences');
   }
 
@@ -117,6 +124,13 @@ const CandidatePortal: React.FC = () => {
             return { ...prev, [field]: [...current, value] };
         }
     });
+  }
+
+  const handleInterviewComplete = (result?: InterviewResult) => {
+     setShowInterviewModal(false);
+     if (result) {
+         setInterviewResult(result);
+     }
   }
 
   const handleApply = () => {
@@ -133,7 +147,8 @@ const CandidatePortal: React.FC = () => {
         resumeText: resumeText,
         analysis: analysisResult,
         jobId: selectedJob.id,
-        preferences: preferences // Save preferences
+        preferences: preferences, // Save preferences
+        interviewResult: interviewResult || undefined // Save interview result
       };
       
       addApplication(newCandidate);
@@ -188,6 +203,7 @@ const CandidatePortal: React.FC = () => {
     setAnalysisResult(null);
     setApplicationSuccess(false);
     setErrorMsg('');
+    setInterviewResult(null);
   };
 
   const getScoreColor = (score: number) => {
@@ -207,6 +223,9 @@ const CandidatePortal: React.FC = () => {
       </div>
     );
   }
+
+  // Helper to determine if we should block application based on interview
+  const isInterviewMissing = selectedJob?.interviewRequired && !interviewResult;
 
   return (
     <div className="w-full">
@@ -434,6 +453,11 @@ const CandidatePortal: React.FC = () => {
                             </button>
                         ))}
                     </div>
+                    {preferences.workModels.includes('Presencial') && selectedJob.location.state !== 'Remoto' && (
+                         <div className="mt-2 text-xs bg-blue-50 text-blue-800 p-2 rounded">
+                            <span className="font-bold">Nota:</span> Esta vaga é em {selectedJob.location.city}/{selectedJob.location.state}. Certifique-se de que a localização é viável para você.
+                         </div>
+                    )}
                  </div>
 
                  <div>
@@ -521,6 +545,7 @@ const CandidatePortal: React.FC = () => {
                     <div className="flex items-center gap-4 text-geek-text text-sm">
                         <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {selectedJob.location.city}, {selectedJob.location.state}</span>
                         <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {selectedJob.type.join(' / ')}</span>
+                        <span className="flex items-center gap-1"><DollarSign className="w-4 h-4" /> {selectedJob.salaryRange}</span>
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -540,17 +565,43 @@ const CandidatePortal: React.FC = () => {
           <div className="mt-10 flex flex-col md:flex-row justify-end items-center gap-4 pb-10">
              {!applicationSuccess ? (
                <>
-                  <button 
-                     onClick={() => setShowInterviewModal(true)}
-                     className="bg-white text-geek-blue border-2 border-geek-blue hover:bg-geek-blue/5 px-8 py-4 rounded-xl font-bold shadow-sm transition-all flex items-center gap-3 text-lg w-full md:w-auto justify-center"
-                  >
-                     <Mic2 className="w-5 h-5" />
-                     Simular Entrevista
-                  </button>
+                  <div className="flex flex-col items-end">
+                     <button 
+                        onClick={() => setShowInterviewModal(true)}
+                        className={`border-2 px-8 py-4 rounded-xl font-bold shadow-sm transition-all flex items-center gap-3 text-lg w-full md:w-auto justify-center ${
+                           interviewResult 
+                           ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
+                           : isInterviewMissing
+                             ? 'bg-orange-50 text-orange-600 border-orange-200 animate-pulse hover:bg-orange-100'
+                             : 'bg-white text-geek-blue border-geek-blue hover:bg-geek-blue/5'
+                        }`}
+                     >
+                        {interviewResult ? (
+                           <>
+                              <CheckCircle2 className="w-5 h-5" /> Entrevista Realizada ({interviewResult.score}/100)
+                           </>
+                        ) : (
+                           <>
+                              <Mic2 className="w-5 h-5" /> 
+                              {isInterviewMissing ? "Realizar Entrevista Obrigatória" : "Simular Entrevista"}
+                           </>
+                        )}
+                     </button>
+                     {isInterviewMissing && (
+                         <span className="text-xs text-orange-600 font-bold mt-2">Necessário para aplicar</span>
+                     )}
+                  </div>
+
                   <button 
                     onClick={handlePreApply}
-                    className="bg-geek-blue hover:bg-geek-blueHover text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:-translate-y-1 flex items-center gap-3 text-lg w-full md:w-auto justify-center"
+                    disabled={isInterviewMissing || false}
+                    className={`px-10 py-4 rounded-xl font-bold shadow-lg transform transition-all flex items-center gap-3 text-lg w-full md:w-auto justify-center ${
+                        isInterviewMissing 
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                        : 'bg-geek-blue hover:bg-geek-blueHover text-white hover:shadow-xl hover:-translate-y-1'
+                    }`}
                   >
+                     {isInterviewMissing ? <Lock className="w-5 h-5" /> : null}
                      Candidatar-se <ArrowRight className="w-5 h-5" />
                   </button>
                </>
@@ -569,7 +620,7 @@ const CandidatePortal: React.FC = () => {
             <InterviewModal 
                job={selectedJob} 
                resumeText={resumeText} 
-               onClose={() => setShowInterviewModal(false)} 
+               onClose={handleInterviewComplete} 
             />
           )}
 

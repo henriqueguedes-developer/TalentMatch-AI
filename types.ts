@@ -15,6 +15,8 @@ export interface Job {
   differentials?: string[]; // Diferenciais / Desejáveis
   softSkills?: string[]; // Perfil Comportamental
   schedule?: string; // Horário de Trabalho
+  salaryRange: string; // Faixa Salarial (Obrigatório)
+  interviewRequired?: boolean; // Se a empresa exige/aceita entrevista simulada
 }
 
 export interface AnalysisResult {
@@ -37,7 +39,13 @@ export interface AnalysisHistoryItem {
 export interface CandidatePreferences {
   workModels: string[]; // O que o candidato aceita
   contractTypes: string[]; // O que o candidato aceita
-  salaryExpectation?: string; // Pretensão Salarial
+  salaryExpectation: string; // Pretensão Salarial (Obrigatório)
+  locationPreference?: string; // Ex: "Aceito mudar de estado" ou "Apenas local"
+}
+
+export interface InterviewResult {
+  score: number;
+  feedback: string;
 }
 
 export interface Candidate {
@@ -50,11 +58,7 @@ export interface Candidate {
   history?: AnalysisHistoryItem[];
   jobId?: string;
   preferences?: CandidatePreferences; // Novas preferências
-}
-
-export interface InterviewResult {
-  score: number;
-  feedback: string;
+  interviewResult?: InterviewResult; // Resultado da entrevista simulada
 }
 
 export enum UserRole {

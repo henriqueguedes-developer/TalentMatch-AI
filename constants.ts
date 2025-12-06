@@ -39,6 +39,8 @@ export const MOCK_JOBS: Job[] = [
     location: { city: 'Florianópolis', state: 'SC' },
     type: ['Remoto', 'Híbrido'],
     contractType: ['PJ'],
+    salaryRange: 'R$ 18.000 - R$ 22.000',
+    interviewRequired: true,
     description: `Estamos buscando um Tech Lead experiente para liderar a evolução da nossa Plataforma B2B Multi-Service. Você será responsável por definir a arquitetura técnica, garantir a escalabilidade do backend e mentorar desenvolvedores plenos e seniores.
     
     O desafio principal é orquestrar a migração de monolitos para microsserviços, garantindo alta disponibilidade e segurança (RBAC/LGPD).`,
@@ -78,6 +80,8 @@ export const MOCK_JOBS: Job[] = [
     location: { city: 'São Paulo', state: 'SP' },
     type: ['Remoto'],
     contractType: ['PJ', 'Cooperado'],
+    salaryRange: 'R$ 20.000 - R$ 25.000',
+    interviewRequired: true,
     description: `Junte-se ao time responsável pelo "coração" da nossa tecnologia. Buscamos um especialista em Backend que respire performance, escalabilidade e otimização. Se você gosta de tunar queries SQL, configurar Clusters Redis e desenhar arquiteturas resilientes a falhas, essa vaga é sua.`,
     responsibilities: [
       'Otimizar a performance de APIs REST e GraphQL críticas',
@@ -112,6 +116,8 @@ export const MOCK_JOBS: Job[] = [
     location: { city: 'Curitiba', state: 'PR' },
     type: ['Remoto'],
     contractType: ['CLT', 'PJ'],
+    salaryRange: 'R$ 14.000 - R$ 17.000',
+    interviewRequired: false,
     description: `Buscamos um Engenheiro de Software Sênior versátil para atuar no ciclo completo de desenvolvimento de novos produtos. Você trabalhará desde a concepção da interface em React até a estruturação do banco de dados e deploy na nuvem.`,
     responsibilities: [
       'Desenvolver novas features de ponta a ponta (Frontend e Backend)',
@@ -146,6 +152,8 @@ export const MOCK_JOBS: Job[] = [
     location: { city: 'Joinville', state: 'SC' },
     type: ['Híbrido', 'Presencial'],
     contractType: ['PJ'],
+    salaryRange: 'R$ 16.000',
+    interviewRequired: true,
     description: `Estamos em busca de um(a) Desenvolvedor(a) Full Stack Sênior, com perfil Tech Lead, para liderar a construção de soluções robustas, escaláveis e de alta performance. Essa pessoa atuará em todo o ciclo de desenvolvimento de software — do levantamento à entrega.`,
     responsibilities: [
       'Atuar em todas as etapas do ciclo de vida do software: levantamento de requisitos, arquitetura, desenvolvimento, testes, CI/CD e deploy',
@@ -184,6 +192,8 @@ export const MOCK_JOBS: Job[] = [
     location: { city: 'Rio de Janeiro', state: 'RJ' },
     type: ['Híbrido'],
     contractType: ['CLT', 'PJ'],
+    salaryRange: 'R$ 12.000 - R$ 15.000',
+    interviewRequired: false,
     description: 'Como Product Manager, você será o "CEO" do produto, liderando a estratégia desde a concepção até o lançamento (End-to-End). Você trabalhará em estreita colaboração com UX Designers e Engenheiros para resolver dores reais dos nossos clientes B2B.',
     responsibilities: [
       'Definir a visão e estratégia do produto',
@@ -203,40 +213,5 @@ export const MOCK_JOBS: Job[] = [
       'Pensamento analítico orientado a dados'
     ],
     schedule: 'Horário comercial flexível'
-  },
-  {
-    id: '3',
-    title: 'Analista de Dados Pleno',
-    department: 'Data & Analytics',
-    location: { city: 'Belo Horizonte', state: 'MG' },
-    type: ['Presencial'],
-    contractType: ['CLT'],
-    description: 'Junte-se ao nosso time de Data & Analytics para transformar dados brutos em insights estratégicos. Você será responsável por sustentar e evoluir nossos pipelines de dados.',
-    requirements: [
-      'Domínio de SQL para consultas complexas e otimização',
-      'Experiência sólida com Python para manipulação de dados (Pandas/NumPy)',
-      'Experiência na construção de dashboards em PowerBI, Tableau ou Looker'
-    ],
-    responsibilities: [
-      'Manter e evoluir pipelines de dados (ETL/ELT)',
-      'Criar visualizações de dados para suporte à decisão',
-      'Garantir a qualidade e integridade dos dados'
-    ]
-  },
-  {
-    id: '4',
-    title: 'Executivo de Vendas B2B (Closer)',
-    department: 'Vendas',
-    location: { city: 'São Paulo', state: 'SP' },
-    type: ['Híbrido', 'Presencial'],
-    contractType: ['CLT'],
-    description: 'Você tem perfil Hunter e adora fechar negócios? Estamos expandindo nosso time comercial Enterprise.',
-    requirements: [
-      'Experiência comprovada com vendas consultivas de software/SaaS',
-      'Histórico consistente de superação de metas (Track Record)',
-      'Excelente oratória, negociação e capacidade de contornar objeções',
-      'Domínio de CRM (Salesforce, Pipedrive ou Hubspot)'
-    ],
-    schedule: 'Comercial'
   }
 ];
