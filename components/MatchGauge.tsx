@@ -22,19 +22,27 @@ const MatchGauge: React.FC<MatchGaugeProps> = ({ score, label = "Match", size = 
   const activeColor = getColor(score);
   const remainingColor = '#E5E7EB'; // Geek Gray Border
 
+  // Geometry calculations
+  const radius = size / 2;
+  const strokeWidth = 15;
+  // Chart center Y position (leaving space for top stroke)
+  const cy = radius + 10; 
+  // Total container height: Radius + Top Padding + Bottom Space for Text
+  const containerHeight = radius + 60; 
+
   return (
     <div className="flex flex-col items-center justify-center">
-      <div style={{ width: size, height: size / 2 + 20 }} className="relative">
+      <div style={{ width: size, height: containerHeight }} className="relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
-              cy="100%"
+              cy={cy}
               startAngle={180}
               endAngle={0}
-              innerRadius={size / 2 - 15}
-              outerRadius={size / 2}
+              innerRadius={radius - strokeWidth}
+              outerRadius={radius}
               paddingAngle={0}
               dataKey="value"
               stroke="none"
@@ -45,18 +53,17 @@ const MatchGauge: React.FC<MatchGaugeProps> = ({ score, label = "Match", size = 
             </Pie>
             <text
               x="50%"
-              y="90%"
+              y={cy - 15} // Positioned inside the arc
               textAnchor="middle"
               dominantBaseline="middle"
               className="font-bold fill-[#1D3557]"
-              style={{ fontSize: size / 4 }}
+              style={{ fontSize: size / 3.5 }}
             >
               {score}%
             </text>
             <text
               x="50%"
-              y="100%"
-              dy={5}
+              y={cy + 30} // Positioned safely below the arc
               textAnchor="middle"
               className="text-xs font-semibold uppercase tracking-wider fill-gray-400"
             >

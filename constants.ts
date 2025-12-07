@@ -8,7 +8,7 @@ export const BRAZIL_STATES = [
   { value: 'AM', label: 'Amazonas' },
   { value: 'BA', label: 'Bahia' },
   { value: 'CE', label: 'Ceará' },
-  { value: 'DF', label: 'Distrito Federal' },
+  { value: 'DF', label: 'Federal District' },
   { value: 'ES', label: 'Espírito Santo' },
   { value: 'GO', label: 'Goiás' },
   { value: 'MA', label: 'Maranhão' },
@@ -34,184 +34,184 @@ export const BRAZIL_STATES = [
 export const MOCK_JOBS: Job[] = [
   {
     id: 'custom-1',
-    title: 'Tech Lead de Engenharia de Software (Node.js & React)',
-    department: 'Engenharia de Produto',
+    title: 'Software Engineering Tech Lead (Node.js & React)',
+    department: 'Product Engineering',
     location: { city: 'Florianópolis', state: 'SC' },
-    type: ['Remoto', 'Híbrido'],
-    contractType: ['PJ'],
+    type: ['Remote', 'Hybrid'],
+    contractType: ['Contractor'],
     salaryRange: 'R$ 18.000 - R$ 22.000',
     interviewRequired: true,
-    description: `Estamos buscando um Tech Lead experiente para liderar a evolução da nossa Plataforma B2B Multi-Service. Você será responsável por definir a arquitetura técnica, garantir a escalabilidade do backend e mentorar desenvolvedores plenos e seniores.
+    description: `We are looking for an experienced Tech Lead to spearhead the evolution of our B2B Multi-Service Platform. You will be responsible for defining technical architecture, ensuring backend scalability, and mentoring mid/senior developers.
     
-    O desafio principal é orquestrar a migração de monolitos para microsserviços, garantindo alta disponibilidade e segurança (RBAC/LGPD).`,
+    The main challenge is orchestrating the migration from monoliths to microservices, ensuring high availability and security (RBAC/LGPD).`,
     responsibilities: [
-      'Liderar tecnicamente o squad de plataforma, definindo padrões de projeto e arquitetura',
-      'Arquitetar soluções distribuídas utilizando Node.js (NestJS) e microsserviços',
-      'Garantir a qualidade do código através de Code Reviews rigorosos e implementação de testes',
-      'Desenhar estratégias de cache (Redis) e processamento assíncrono para alto volume de dados',
-      'Mentorar o time em boas práticas de TypeScript, Clean Architecture e SOLID'
+      'Technically lead the platform squad, defining design patterns and architecture',
+      'Architect distributed solutions using Node.js (NestJS) and microservices',
+      'Ensure code quality through rigorous Code Reviews and testing implementation',
+      'Design caching strategies (Redis) and asynchronous processing for high data volume',
+      'Mentor the team on TypeScript, Clean Architecture, and SOLID best practices'
     ],
     requirements: [
-      '10+ anos de experiência em desenvolvimento de software',
-      'Domínio avançado de Node.js (NestJS) e TypeScript',
-      'Experiência sólida com React no Frontend',
-      'Vivência em arquitetura de microsserviços e sistemas distribuídos',
-      'Experiência com bancos relacionais (PostgreSQL) e NoSQL (Redis)',
-      'Conhecimento em Cloud (AWS) e Containerização (Docker)'
+      '10+ years of experience in software development',
+      'Advanced mastery of Node.js (NestJS) and TypeScript',
+      'Solid experience with React on Frontend',
+      'Experience in microservices architecture and distributed systems',
+      'Experience with relational databases (PostgreSQL) and NoSQL (Redis)',
+      'Knowledge of Cloud (AWS) and Containerization (Docker)'
     ],
     differentials: [
-      'Experiência prévia como Arquiteto de Software ou Tech Lead',
-      'Conhecimento em Governança de dados (LGPD) e Segurança (JWT, RBAC)',
-      'Vivência em ambientes de alto tráfego (B2B)',
-      'Contribuições em projetos Open Source'
+      'Previous experience as Software Architect or Tech Lead',
+      'Knowledge in Data Governance (GDPR/LGPD) and Security (JWT, RBAC)',
+      'Experience in high-traffic environments (B2B)',
+      'Contributions to Open Source projects'
     ],
     softSkills: [
-      'Liderança técnica inspiradora',
-      'Capacidade de traduzir requisitos de negócio em soluções técnicas',
-      'Comunicação clara com stakeholders não técnicos',
-      'Mentalidade ágil e foco em entrega de valor'
+      'Inspiring technical leadership',
+      'Ability to translate business requirements into technical solutions',
+      'Clear communication with non-technical stakeholders',
+      'Agile mindset and focus on value delivery'
     ],
-    schedule: 'Horário Flexível - Foco em Entregas'
+    schedule: 'Flexible Hours - Delivery Focused'
   },
   {
     id: 'custom-2',
-    title: 'Arquiteto de Soluções Backend (High Performance)',
+    title: 'Backend Solutions Architect (High Performance)',
     department: 'Core Platform',
     location: { city: 'São Paulo', state: 'SP' },
-    type: ['Remoto'],
-    contractType: ['PJ', 'Cooperado'],
+    type: ['Remote'],
+    contractType: ['Contractor', 'Freelancer'],
     salaryRange: 'R$ 20.000 - R$ 25.000',
     interviewRequired: true,
-    description: `Junte-se ao time responsável pelo "coração" da nossa tecnologia. Buscamos um especialista em Backend que respire performance, escalabilidade e otimização. Se você gosta de tunar queries SQL, configurar Clusters Redis e desenhar arquiteturas resilientes a falhas, essa vaga é sua.`,
+    description: `Join the team responsible for the "heart" of our technology. We are looking for a Backend specialist who breathes performance, scalability, and optimization. If you like tuning SQL queries, configuring Redis Clusters, and designing fault-tolerant architectures, this role is for you.`,
     responsibilities: [
-      'Otimizar a performance de APIs REST e GraphQL críticas',
-      'Implementar e gerenciar filas de processamento assíncrono (Bull/SQS)',
-      'Monitorar a saúde da aplicação (APM, Logs) e atuar proativamente em gargalos',
-      'Desenvolver workers em Python ou Node.js para processamento massivo de dados',
-      'Garantir a segurança da aplicação implementando autenticação e autorização robustas'
+      'Optimize performance of critical REST and GraphQL APIs',
+      'Implement and manage asynchronous processing queues (Bull/SQS)',
+      'Monitor application health (APM, Logs) and act proactively on bottlenecks',
+      'Develop workers in Python or Node.js for massive data processing',
+      'Ensure application security by implementing robust authentication and authorization'
     ],
     requirements: [
-      'Expertise profunda em Node.js e ecossistema JavaScript/TypeScript',
-      'Domínio de PostgreSQL (Indexação, Otimização de Queries, Partitioning)',
-      'Experiência avançada com Redis (Caching, Pub/Sub, Cluster)',
-      'Vivência com filas e mensageria (RabbitMQ, Kafka ou SQS)',
-      'Docker e Kubernetes para orquestração'
+      'Deep expertise in Node.js and JavaScript/TypeScript ecosystem',
+      'Mastery of PostgreSQL (Indexing, Query Optimization, Partitioning)',
+      'Advanced experience with Redis (Caching, Pub/Sub, Cluster)',
+      'Experience with queues and messaging (RabbitMQ, Kafka, or SQS)',
+      'Docker and Kubernetes for orchestration'
     ],
     differentials: [
-      'Conhecimento em Python para Scripts/Data Engineering',
-      'Experiência com GraphQL em larga escala',
-      'Certificações AWS (Solutions Architect)'
+      'Knowledge in Python for Scripts/Data Engineering',
+      'Experience with GraphQL at large scale',
+      'AWS Certifications (Solutions Architect)'
     ],
     softSkills: [
-      'Perfil analítico e orientado a dados (Data Driven)',
-      'Resiliência e capacidade de resolução de problemas complexos sob pressão',
-      'Autonomia e autogerenciamento (Trabalho Remoto)'
+      'Analytical and Data-Driven profile',
+      'Resilience and ability to solve complex problems under pressure',
+      'Autonomy and self-management (Remote Work)'
     ],
-    schedule: 'Segunda a Sexta, Horário Comercial'
+    schedule: 'Mon-Fri, Business Hours'
   },
   {
     id: 'custom-3',
-    title: 'Engenheiro de Software Sênior (Full Stack)',
-    department: 'Inovação',
+    title: 'Senior Software Engineer (Full Stack)',
+    department: 'Innovation',
     location: { city: 'Curitiba', state: 'PR' },
-    type: ['Remoto'],
-    contractType: ['CLT', 'PJ'],
+    type: ['Remote'],
+    contractType: ['Full-time', 'Contractor'],
     salaryRange: 'R$ 14.000 - R$ 17.000',
     interviewRequired: false,
-    description: `Buscamos um Engenheiro de Software Sênior versátil para atuar no ciclo completo de desenvolvimento de novos produtos. Você trabalhará desde a concepção da interface em React até a estruturação do banco de dados e deploy na nuvem.`,
+    description: `We are seeking a versatile Senior Software Engineer to work on the full development cycle of new products. You will work from interface conception in React to database structuring and cloud deploy.`,
     responsibilities: [
-      'Desenvolver novas features de ponta a ponta (Frontend e Backend)',
-      'Implementar interfaces ricas e responsivas com React e Tailwind/Material UI',
-      'Criar APIs seguras e documentadas (Swagger/OpenAPI)',
-      'Integrar sistemas com APIs de terceiros (Gateways de Pagamento, ERPs)',
-      'Participar de rituais ágeis e contribuir para a melhoria contínua do processo'
+      'Develop new features end-to-end (Frontend and Backend)',
+      'Implement rich and responsive interfaces with React and Tailwind/Material UI',
+      'Create secure and documented APIs (Swagger/OpenAPI)',
+      'Integrate systems with third-party APIs (Payment Gateways, ERPs)',
+      'Participate in agile rituals and contribute to continuous process improvement'
     ],
     requirements: [
-      'Sólida experiência com React (Hooks, Context API, State Management)',
-      'Sólida experiência com Node.js/NestJS no Backend',
-      'Experiência com CI/CD (GitHub Actions, Jenkins ou similar)',
-      'Conhecimento em testes automatizados (Jest, Cypress, React Testing Library)',
-      'Inglês Técnico para leitura e escrita'
+      'Solid experience with React (Hooks, Context API, State Management)',
+      'Solid experience with Node.js/NestJS on Backend',
+      'Experience with CI/CD (GitHub Actions, Jenkins or similar)',
+      'Knowledge of automated testing (Jest, Cypress, React Testing Library)',
+      'Technical English for reading and writing'
     ],
     differentials: [
-      'Experiência com Next.js',
-      'Conhecimento em ferramentas de monitoramento (New Relic, Datadog)',
-      'Experiência com metodologias de Design System'
+      'Experience with Next.js',
+      'Knowledge of monitoring tools (New Relic, Datadog)',
+      'Experience with Design System methodologies'
     ],
     softSkills: [
-      'Trabalho em equipe e colaboração',
-      'Foco na experiência do usuário (UX)',
-      'Adaptabilidade a mudanças de escopo'
+      'Teamwork and collaboration',
+      'Focus on User Experience (UX)',
+      'Adaptability to scope changes'
     ],
-    schedule: 'Flexível'
+    schedule: 'Flexible'
   },
   {
     id: '1',
-    title: 'Desenvolvedor(a) Full Stack Sênior – Tech Lead (.NET, Angular)',
-    department: 'Engenharia',
+    title: 'Senior Full Stack Developer – Tech Lead (.NET, Angular)',
+    department: 'Engineering',
     location: { city: 'Joinville', state: 'SC' },
-    type: ['Híbrido', 'Presencial'],
-    contractType: ['PJ'],
+    type: ['Hybrid', 'On-site'],
+    contractType: ['Contractor'],
     salaryRange: 'R$ 16.000',
     interviewRequired: true,
-    description: `Estamos em busca de um(a) Desenvolvedor(a) Full Stack Sênior, com perfil Tech Lead, para liderar a construção de soluções robustas, escaláveis e de alta performance. Essa pessoa atuará em todo o ciclo de desenvolvimento de software — do levantamento à entrega.`,
+    description: `We are looking for a Senior Full Stack Developer with a Tech Lead profile to lead the construction of robust, scalable, and high-performance solutions. This person will act in the entire software development life cycle — from requirements to delivery.`,
     responsibilities: [
-      'Atuar em todas as etapas do ciclo de vida do software: levantamento de requisitos, arquitetura, desenvolvimento, testes, CI/CD e deploy',
-      'Projetar e implementar arquiteturas escaláveis e resilientes, utilizando microserviços, APIs REST e GraphQL',
-      'Desenvolver interfaces modernas com Angular 12+ e TypeScript',
-      'Criar e manter APIs performáticas e seguras com .NET 7 a 9 (C#)',
-      'Monitorar e otimizar aplicações em produção (logs, métricas, tracing e APM)',
-      'Documentar boas práticas e padrões de arquitetura'
+      'Act in all stages of the software life cycle: requirements gathering, architecture, development, testing, CI/CD, and deploy',
+      'Design and implement scalable and resilient architectures using microservices, REST APIs, and GraphQL',
+      'Develop modern interfaces with Angular 12+ and TypeScript',
+      'Create and maintain performant and secure APIs with .NET 7 to 9 (C#)',
+      'Monitor and optimize applications in production (logs, metrics, tracing, and APM)',
+      'Document best practices and architecture patterns'
     ],
     requirements: [
-      'Angular 12+ / TypeScript: arquitetura modular, RxJS, interceptors',
-      'C# / .NET 7–9: APIs REST, Entity Framework Core, LINQ avançado',
-      'SQL avançado (PostgreSQL ou SQL Server)',
+      'Angular 12+ / TypeScript: modular architecture, RxJS, interceptors',
+      'C# / .NET 7–9: REST APIs, Entity Framework Core, advanced LINQ',
+      'Advanced SQL (PostgreSQL or SQL Server)',
       'Docker / Docker Compose',
-      'CI/CD: automação completa de build, testes e deploy',
-      'Git: versionamento semântico, uso de PRs e fluxo GitFlow'
+      'CI/CD: full automation of build, testing, and deploy',
+      'Git: semantic versioning, use of PRs, and GitFlow'
     ],
     differentials: [
-      'Experiência com MongoDB ou Redis',
-      'Vivência com cloud computing (AWS, Azure ou Google Cloud)',
-      'Arquitetura de microserviços',
-      'Segurança de aplicações web (OWASP, JWT)'
+      'Experience with MongoDB or Redis',
+      'Experience with cloud computing (AWS, Azure, or Google Cloud)',
+      'Microservices architecture',
+      'Web application security (OWASP, JWT)'
     ],
     softSkills: [
-      'Autodidata, com aprendizado e aplicação rápidos',
-      'Proativo, com atitude de dono e foco em resolver',
-      'Organizado, atento a versionamento, testes e documentação',
-      'Colaborativo, com boa comunicação entre áreas técnicas e de produto'
+      'Self-taught, with fast learning and application',
+      'Proactive, with ownership attitude and focus on solving',
+      'Organized, attentive to versioning, testing, and documentation',
+      'Collaborative, with good communication between technical and product areas'
     ],
-    schedule: 'Segunda a sexta-feira, das 8h às 12h e das 13h às 17h48'
+    schedule: 'Monday to Friday, 8am to 12pm and 1pm to 5:48pm'
   },
   {
     id: '2',
-    title: 'Product Manager B2B',
-    department: 'Produto',
+    title: 'B2B Product Manager',
+    department: 'Product',
     location: { city: 'Rio de Janeiro', state: 'RJ' },
-    type: ['Híbrido'],
-    contractType: ['CLT', 'PJ'],
+    type: ['Hybrid'],
+    contractType: ['Full-time', 'Contractor'],
     salaryRange: 'R$ 12.000 - R$ 15.000',
     interviewRequired: false,
-    description: 'Como Product Manager, você será o "CEO" do produto, liderando a estratégia desde a concepção até o lançamento (End-to-End). Você trabalhará em estreita colaboração com UX Designers e Engenheiros para resolver dores reais dos nossos clientes B2B.',
+    description: 'As a Product Manager, you will be the "CEO" of the product, leading the strategy from conception to launch (End-to-End). You will work closely with UX Designers and Engineers to solve real pains of our B2B clients.',
     responsibilities: [
-      'Definir a visão e estratégia do produto',
-      'Gerenciar o backlog e priorizar features baseadas em valor',
-      'Conduzir processos de Product Discovery',
-      'Analisar métricas de uso e engajamento'
+      'Define product vision and strategy',
+      'Manage backlog and prioritize features based on value',
+      'Conduct Product Discovery processes',
+      'Analyze usage and engagement metrics'
     ],
     requirements: [
-      '3+ anos de experiência como PM em produtos digitais B2B ou SaaS',
-      'Domínio de metodologias ágeis e frameworks de priorização (RICE, WSJF)',
-      'Forte capacidade analítica (SQL e análise de métricas de produto)',
-      'Experiência com Discovery contínuo e entrevistas com usuários'
+      '3+ years of experience as PM in B2B digital products or SaaS',
+      'Mastery of agile methodologies and prioritization frameworks (RICE, WSJF)',
+      'Strong analytical capacity (SQL and product metrics analysis)',
+      'Experience with continuous Discovery and user interviews'
     ],
     softSkills: [
-      'Excelente comunicação e capacidade de negociação',
-      'Liderança por influência',
-      'Pensamento analítico orientado a dados'
+      'Excellent communication and negotiation skills',
+      'Leadership by influence',
+      'Data-driven analytical thinking'
     ],
-    schedule: 'Horário comercial flexível'
+    schedule: 'Flexible business hours'
   }
 ];

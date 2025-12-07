@@ -22,7 +22,7 @@ const RecruiterDashboard: React.FC = () => {
 
   // Filter & Sort States
   const [filterTerm, setFilterTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all'); // 'all', 'Alta Prioridade', 'Considerar', 'Baixa Prioridade'
+  const [filterStatus, setFilterStatus] = useState<string>('all'); // 'all', 'High Priority', 'Consider', 'Low Priority'
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Form state for new job
@@ -134,13 +134,13 @@ const RecruiterDashboard: React.FC = () => {
     const newJob: Job = {
       id: Date.now().toString(),
       title: newJobData.title,
-      department: newJobData.department || 'Geral',
+      department: newJobData.department || 'General',
       location: {
         city: newJobData.city,
         state: newJobData.state
       },
-      type: newJobData.type.length > 0 ? newJobData.type : ['Presencial'],
-      contractType: newJobData.contractType.length > 0 ? newJobData.contractType : ['CLT'],
+      type: newJobData.type.length > 0 ? newJobData.type : ['On-site'],
+      contractType: newJobData.contractType.length > 0 ? newJobData.contractType : ['Full-time'],
       description: newJobData.description,
       schedule: newJobData.schedule,
       salaryRange: newJobData.salaryRange,
@@ -212,7 +212,7 @@ const RecruiterDashboard: React.FC = () => {
         setLoading(false);
       }
     } catch (error) {
-      alert("Erro ao ler arquivo. Verifique se é um formato suportado.");
+      alert("Error reading file. Check if format is supported.");
       setLoading(false);
     }
   };
@@ -222,7 +222,7 @@ const RecruiterDashboard: React.FC = () => {
     
     // Validate salary presence for manual entry if job has salary
     if (!manualCandidate.salaryExpectation) {
-        alert("Pretensão Salarial é obrigatória para análise de match.");
+        alert("Salary Expectation is mandatory for match analysis.");
         return;
     }
 
@@ -253,7 +253,7 @@ const RecruiterDashboard: React.FC = () => {
       setIsAddingCandidate(false);
       setManualCandidate({ name: '', email: '', resumeText: '', fileName: '', salaryExpectation: '', workModels: [], contractTypes: [] });
     } catch (error) {
-      alert("Erro na análise. Tente novamente.");
+      alert("Analysis error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -273,10 +273,10 @@ const RecruiterDashboard: React.FC = () => {
         name: 'Carlos Silva',
         email: 'carlos.silva@email.com',
         fileName: 'CV_Carlos_Silva_2024.pdf',
-        resumeText: `Desenvolvedor Full Stack com 6 anos de experiência. Forte em React, Node.js e PostgreSQL. Liderei migração de monólito para microsserviços. Inglês fluente.`,
+        resumeText: `Full Stack Developer with 6 years experience. Strong in React, Node.js and PostgreSQL. Led migration from monolith to microservices. Fluent English.`,
         history: [
-          { date: '15/01/2024', overallScore: 72, recommendation: 'Considerar' },
-          { date: '10/03/2024', overallScore: 78, recommendation: 'Considerar' }
+          { date: '15/01/2024', overallScore: 72, recommendation: 'Consider' },
+          { date: '10/03/2024', overallScore: 78, recommendation: 'Consider' }
         ],
         jobId: selectedJob.id
       },
@@ -285,7 +285,7 @@ const RecruiterDashboard: React.FC = () => {
         name: 'Ana Souza',
         email: 'ana.souza@email.com',
         fileName: 'Ana_Souza_Resume.docx',
-        resumeText: `Formada em Marketing. Fiz um bootcamp de React há 6 meses. Tenho experiência com vendas e atendimento ao cliente. Busco primeira oportunidade como dev junior.`,
+        resumeText: `Marketing Graduate. Did a React bootcamp 6 months ago. Experience with sales and customer support. Looking for first opportunity as junior dev.`,
         jobId: selectedJob.id
       }
     ];
@@ -300,7 +300,7 @@ const RecruiterDashboard: React.FC = () => {
       
       setCandidates([...realApps, ...analyzedSimulations]);
     } catch (error) {
-      alert("Erro ao processar candidatos. Verifique sua API Key.");
+      alert("Error processing candidates. Check your API Key.");
     } finally {
       setLoading(false);
     }
@@ -314,8 +314,8 @@ const RecruiterDashboard: React.FC = () => {
 
   const getBadgeColor = (rec: string) => {
       switch(rec) {
-          case 'Alta Prioridade': return 'bg-green-100 text-green-800 border-green-200';
-          case 'Considerar': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+          case 'High Priority': return 'bg-green-100 text-green-800 border-green-200';
+          case 'Consider': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
           default: return 'bg-red-100 text-red-800 border-red-200';
       }
   };
@@ -331,12 +331,12 @@ const RecruiterDashboard: React.FC = () => {
                 onClick={() => setAnalysisView(null)}
                 className="mb-6 text-geek-text hover:text-geek-blue font-medium flex items-center gap-2 transition-colors"
               >
-                  &larr; Voltar para lista
+                  &larr; Back to list
               </button>
               
               <div className="flex justify-between items-end mb-8">
                 <div>
-                    <h2 className="text-3xl font-bold text-geek-dark mb-2">Análise de {analysisView.name}</h2>
+                    <h2 className="text-3xl font-bold text-geek-dark mb-2">Analysis for {analysisView.name}</h2>
                     <div className="flex items-center gap-2 text-geek-text">
                        <span className="bg-white px-3 py-1 rounded-full border border-geek-border text-sm font-medium shadow-sm">
                          {selectedJob?.title}
@@ -353,15 +353,15 @@ const RecruiterDashboard: React.FC = () => {
                    <div className="p-6 border-b border-geek-border">
                     <h3 className="text-lg font-bold text-geek-dark flex items-center gap-2">
                       <History className="w-5 h-5 text-geek-blue" />
-                      Histórico de Análises
+                      Analysis History
                     </h3>
                   </div>
                   <table className="min-w-full divide-y divide-gray-100">
                     <thead className="bg-geek-gray">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Data</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Date</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Score</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Classificação</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Classification</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 bg-white">
@@ -392,7 +392,7 @@ const RecruiterDashboard: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-geek-dark/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-100 transition-all border border-geek-border max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-geek-border bg-gray-50/50 sticky top-0 bg-opacity-95 backdrop-blur">
-               <h3 className="text-lg font-bold text-geek-dark">Detalhes do Candidato</h3>
+               <h3 className="text-lg font-bold text-geek-dark">Candidate Details</h3>
                <button 
                  onClick={() => setModalCandidate(null)}
                  className="text-gray-400 hover:text-geek-dark hover:bg-gray-200 p-2 rounded-lg transition-colors"
@@ -427,7 +427,7 @@ const RecruiterDashboard: React.FC = () => {
                  {modalCandidate.preferences && (
                    <div className="p-4 bg-geek-gray rounded-xl border border-geek-border space-y-3">
                       <div>
-                        <p className="text-xs text-geek-text uppercase font-bold tracking-wider mb-2">Preferências</p>
+                        <p className="text-xs text-geek-text uppercase font-bold tracking-wider mb-2">Preferences</p>
                         <div className="flex flex-wrap gap-2">
                           {modalCandidate.preferences.workModels.map(m => (
                             <span key={m} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-600 font-medium">{m}</span>
@@ -440,15 +440,15 @@ const RecruiterDashboard: React.FC = () => {
                       
                       {modalCandidate.preferences.salaryExpectation && selectedJob?.salaryRange && (
                          <div className="mt-3 pt-3 border-t border-geek-border/50">
-                            <span className="text-xs font-bold text-geek-text uppercase flex items-center gap-1"><DollarSign className="w-3 h-3"/> Alinhamento Salarial</span>
+                            <span className="text-xs font-bold text-geek-text uppercase flex items-center gap-1"><DollarSign className="w-3 h-3"/> Salary Alignment</span>
                             <div className="flex justify-between items-center mt-2 bg-white p-2 rounded border border-gray-200">
                                <div className="text-right">
-                                  <p className="text-xs text-geek-text">Pretensão</p>
+                                  <p className="text-xs text-geek-text">Expectation</p>
                                   <p className="font-bold text-geek-dark">R$ {modalCandidate.preferences.salaryExpectation}</p>
                                </div>
                                <div className="text-gray-300">vs</div>
                                <div>
-                                  <p className="text-xs text-geek-text">Budget da Vaga</p>
+                                  <p className="text-xs text-geek-text">Job Budget</p>
                                   <p className="font-bold text-green-600">{selectedJob.salaryRange}</p>
                                </div>
                             </div>
@@ -462,7 +462,7 @@ const RecruiterDashboard: React.FC = () => {
                     <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
                         <div className="flex justify-between items-center mb-2">
                            <span className="text-xs font-bold text-blue-800 uppercase flex items-center gap-1">
-                             <MessageSquare className="w-3 h-3"/> Entrevista Simulada
+                             <MessageSquare className="w-3 h-3"/> Simulated Interview
                            </span>
                            <span className="text-lg font-bold text-blue-800">{modalCandidate.interviewResult.score}/100</span>
                         </div>
@@ -475,7 +475,7 @@ const RecruiterDashboard: React.FC = () => {
                  {modalCandidate.analysis && (
                    <div className="pt-2">
                       <div className="flex justify-between items-end mb-2">
-                        <span className="text-sm font-bold text-geek-text uppercase">Score de Aderência</span>
+                        <span className="text-sm font-bold text-geek-text uppercase">Adherence Score</span>
                         <span className={`text-2xl font-bold ${getScoreColor(modalCandidate.analysis.overallScore)}`}>
                           {modalCandidate.analysis.overallScore}%
                         </span>
@@ -496,7 +496,7 @@ const RecruiterDashboard: React.FC = () => {
                   onClick={() => setModalCandidate(null)}
                   className="px-5 py-2.5 text-geek-text hover:bg-geek-gray rounded-lg font-semibold text-sm transition-colors"
                >
-                 Fechar
+                 Close
                </button>
                <button 
                   onClick={() => {
@@ -505,7 +505,7 @@ const RecruiterDashboard: React.FC = () => {
                   }}
                   className="px-5 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors shadow-soft"
                >
-                 Ver Análise Completa <ChevronRight className="w-4 h-4" />
+                 View Full Analysis <ChevronRight className="w-4 h-4" />
                </button>
             </div>
           </div>
@@ -516,11 +516,11 @@ const RecruiterDashboard: React.FC = () => {
       <div className="w-full md:w-80 flex flex-col gap-4">
         <div className="bg-white rounded-xl shadow-card border border-geek-border p-5 sticky top-24">
           <div className="flex justify-between items-center mb-6">
-             <h2 className="text-lg font-bold text-geek-dark">Vagas Abertas</h2>
+             <h2 className="text-lg font-bold text-geek-dark">Open Positions</h2>
              <button 
                 onClick={() => { setIsCreatingJob(true); setIsAddingCandidate(false); setSelectedJob(null); }}
                 className="p-2 rounded-lg bg-geek-blue text-white hover:bg-geek-blueHover transition-colors shadow-sm"
-                title="Nova Vaga"
+                title="New Job"
              >
                <Plus className="w-5 h-5" />
              </button>
@@ -529,7 +529,7 @@ const RecruiterDashboard: React.FC = () => {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-geek-text" />
             <input 
               type="text" 
-              placeholder="Buscar vagas..." 
+              placeholder="Search jobs..." 
               className="w-full pl-9 pr-4 py-2.5 bg-geek-gray border border-transparent rounded-lg text-sm focus:outline-none focus:bg-white focus:border-geek-blue focus:ring-1 focus:ring-geek-blue transition-all"
             />
           </div>
@@ -563,7 +563,7 @@ const RecruiterDashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-card border border-geek-border p-8 animate-in fade-in slide-in-from-bottom-4">
              {/* ... Creating Job Form ... */}
              <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
-              <h2 className="text-2xl font-bold text-geek-dark">Cadastrar Nova Vaga</h2>
+              <h2 className="text-2xl font-bold text-geek-dark">Register New Job</h2>
               <button onClick={() => setIsCreatingJob(false)} className="text-geek-text hover:text-geek-dark transition-colors">
                 <X className="w-6 h-6" />
               </button>
@@ -572,32 +572,32 @@ const RecruiterDashboard: React.FC = () => {
             <div className="space-y-8">
               {/* Basic Info Section */}
               <div className="space-y-6">
-                <h3 className="text-lg font-bold text-geek-dark border-l-4 border-geek-blue pl-3">Informações Básicas</h3>
+                <h3 className="text-lg font-bold text-geek-dark border-l-4 border-geek-blue pl-3">Basic Information</h3>
                 
                 <div>
-                  <label className="block text-sm font-bold text-geek-dark mb-2">Título da Vaga</label>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Job Title</label>
                   <input 
                     type="text" 
                     value={newJobData.title}
                     onChange={(e) => setNewJobData({...newJobData, title: e.target.value})}
                     className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                    placeholder="Ex: Desenvolvedor(a) Full Stack Sênior"
+                    placeholder="Ex: Senior Full Stack Developer"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-bold text-geek-dark mb-2">Departamento</label>
+                    <label className="block text-sm font-bold text-geek-dark mb-2">Department</label>
                     <input 
                       type="text" 
                       value={newJobData.department}
                       onChange={(e) => setNewJobData({...newJobData, department: e.target.value})}
                       className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                      placeholder="Ex: Engenharia"
+                      placeholder="Ex: Engineering"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-geek-dark mb-2">Faixa Salarial (Obrigatório)</label>
+                    <label className="block text-sm font-bold text-geek-dark mb-2">Salary Range (Mandatory)</label>
                     <div className="relative">
                         <span className="absolute left-3 top-3.5 text-geek-text text-sm font-bold">R$</span>
                         <input 
@@ -613,23 +613,23 @@ const RecruiterDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                     <label className="block text-sm font-bold text-geek-dark mb-2">Cidade</label>
+                     <label className="block text-sm font-bold text-geek-dark mb-2">City</label>
                      <input 
                         type="text" 
                         value={newJobData.city}
                         onChange={(e) => setNewJobData({...newJobData, city: e.target.value})}
                         className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                        placeholder="São Paulo"
+                        placeholder="New York"
                       />
                   </div>
                   <div>
-                     <label className="block text-sm font-bold text-geek-dark mb-2">Estado</label>
+                     <label className="block text-sm font-bold text-geek-dark mb-2">State</label>
                      <select
                         value={newJobData.state}
                         onChange={(e) => setNewJobData({...newJobData, state: e.target.value})}
                         className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
                       >
-                        <option value="">Selecione...</option>
+                        <option value="">Select...</option>
                         {BRAZIL_STATES.map(s => (
                           <option key={s.value} value={s.value}>{s.label}</option>
                         ))}
@@ -639,9 +639,9 @@ const RecruiterDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div>
-                      <label className="block text-sm font-bold text-geek-dark mb-2">Modelo de Trabalho</label>
+                      <label className="block text-sm font-bold text-geek-dark mb-2">Work Model</label>
                       <div className="space-y-2 bg-geek-gray p-3 rounded-lg border border-geek-border">
-                         {['Presencial', 'Híbrido', 'Remoto'].map(option => (
+                         {['On-site', 'Hybrid', 'Remote'].map(option => (
                            <label key={option} className="flex items-center gap-2 cursor-pointer">
                               <input 
                                 type="checkbox" 
@@ -656,9 +656,9 @@ const RecruiterDashboard: React.FC = () => {
                    </div>
                    <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-bold text-geek-dark mb-2">Tipo de Contrato</label>
+                        <label className="block text-sm font-bold text-geek-dark mb-2">Contract Type</label>
                         <div className="space-y-2 bg-geek-gray p-3 rounded-lg border border-geek-border">
-                            {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
+                            {['Full-time', 'Contractor', 'Freelancer', 'Internship'].map(option => (
                             <label key={option} className="flex items-center gap-2 cursor-pointer">
                                 <input 
                                     type="checkbox" 
@@ -679,79 +679,79 @@ const RecruiterDashboard: React.FC = () => {
                               onChange={(e) => setNewJobData({...newJobData, interviewRequired: e.target.checked})}
                               className="w-4 h-4 text-geek-blue rounded border-geek-border focus:ring-geek-blue"
                             />
-                            <span className="text-sm font-bold text-blue-900">Exigir Entrevista Simulada com IA</span>
+                            <span className="text-sm font-bold text-blue-900">Require AI Simulated Interview</span>
                          </label>
-                         <p className="text-xs text-blue-700 mt-1 pl-6">Candidatos serão incentivados a responder 5 perguntas técnicas.</p>
+                         <p className="text-xs text-blue-700 mt-1 pl-6">Candidates will be encouraged to answer 5 technical questions.</p>
                       </div>
                    </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-geek-dark mb-2">Descrição da Vaga</label>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Job Description</label>
                   <textarea 
                     rows={4}
                     value={newJobData.description}
                     onChange={(e) => setNewJobData({...newJobData, description: e.target.value})}
                     className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                    placeholder="Visão geral e contexto da oportunidade..."
+                    placeholder="Overview and context of the opportunity..."
                   />
                 </div>
               </div>
 
               {/* Requirements & Details Section */}
               <div className="space-y-6 pt-6 border-t border-geek-border">
-                <h3 className="text-lg font-bold text-geek-dark border-l-4 border-geek-blue pl-3">Detalhes Técnicos & Perfil</h3>
+                <h3 className="text-lg font-bold text-geek-dark border-l-4 border-geek-blue pl-3">Technical Details & Profile</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
-                       <ListChecks className="w-4 h-4 text-geek-blue" /> Responsabilidades (um por linha)
+                       <ListChecks className="w-4 h-4 text-geek-blue" /> Responsibilities (one per line)
                     </label>
                     <textarea 
                       rows={5}
                       value={responsibilitiesInput}
                       onChange={(e) => setResponsibilitiesInput(e.target.value)}
                       className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
-                      placeholder="- Liderar equipe&#10;- Desenvolver APIs"
+                      placeholder="- Lead team&#10;- Develop APIs"
                     />
                   </div>
                   
                   <div>
                     <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
-                      <BrainCircuit className="w-4 h-4 text-red-500" /> Requisitos Obrigatórios (um por linha)
+                      <BrainCircuit className="w-4 h-4 text-red-500" /> Mandatory Requirements (one per line)
                     </label>
                     <textarea 
                       rows={5}
                       value={requirementsInput}
                       onChange={(e) => setRequirementsInput(e.target.value)}
                       className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
-                      placeholder="- Angular 12+&#10;- C# Avançado"
+                      placeholder="- Angular 12+&#10;- Advanced C#"
                     />
                   </div>
 
                   <div>
                     <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
-                      <Star className="w-4 h-4 text-yellow-500" /> Diferenciais / Bônus (um por linha)
+                      <Star className="w-4 h-4 text-yellow-500" /> Differentials / Bonus (one per line)
                     </label>
                     <textarea 
                       rows={5}
                       value={differentialsInput}
                       onChange={(e) => setDifferentialsInput(e.target.value)}
                       className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
-                      placeholder="- Conhecimento em AWS&#10;- Redis"
+                      placeholder="- AWS Knowledge&#10;- Redis"
                     />
                   </div>
 
                   <div>
                     <label className="flex items-center gap-2 text-sm font-bold text-geek-dark mb-2">
-                      <Users className="w-4 h-4 text-purple-500" /> Soft Skills / Comportamental (um por linha)
+                      <Users className="w-4 h-4 text-purple-500" /> Soft Skills / Behavioral (one per line)
                     </label>
                     <textarea 
                       rows={5}
                       value={softSkillsInput}
                       onChange={(e) => setSoftSkillsInput(e.target.value)}
                       className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all font-mono text-sm"
-                      placeholder="- Proatividade&#10;- Boa comunicação"
+                      placeholder="- Proactivity&#10;- Good communication"
                     />
                   </div>
                 </div>
@@ -762,7 +762,7 @@ const RecruiterDashboard: React.FC = () => {
                   onClick={() => setIsCreatingJob(false)}
                   className="px-6 py-2.5 text-geek-text bg-white border border-geek-border hover:bg-geek-gray rounded-lg font-semibold transition-colors"
                 >
-                  Cancelar
+                  Cancel
                 </button>
                 <button 
                   onClick={handleCreateJob}
@@ -770,7 +770,7 @@ const RecruiterDashboard: React.FC = () => {
                   className="px-6 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 shadow-soft"
                 >
                   <Save className="w-4 h-4" />
-                  Salvar Vaga
+                  Save Job
                 </button>
               </div>
             </div>
@@ -780,9 +780,9 @@ const RecruiterDashboard: React.FC = () => {
              {/* ... Keep the same Add Candidate Logic, just ensure layout consistency ... */}
              <div className="flex justify-between items-center mb-8 border-b border-geek-border pb-4">
               <div>
-                <h2 className="text-2xl font-bold text-geek-dark">Adicionar Candidato</h2>
+                <h2 className="text-2xl font-bold text-geek-dark">Add Candidate</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm text-geek-text">para a vaga:</span>
+                  <span className="text-sm text-geek-text">for vacancy:</span>
                   <span className="text-sm font-semibold text-geek-blue bg-geek-blue/10 px-2 py-0.5 rounded">{selectedJob?.title}</span>
                 </div>
               </div>
@@ -795,13 +795,13 @@ const RecruiterDashboard: React.FC = () => {
                {/* Candidate Input Fields */}
                <div className="grid grid-cols-2 gap-6">
                  <div>
-                  <label className="block text-sm font-bold text-geek-dark mb-2">Nome Completo</label>
+                  <label className="block text-sm font-bold text-geek-dark mb-2">Full Name</label>
                   <input 
                     type="text" 
                     value={manualCandidate.name}
                     onChange={(e) => setManualCandidate({...manualCandidate, name: e.target.value})}
                     className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                    placeholder="João Silva"
+                    placeholder="John Doe"
                   />
                  </div>
                  <div>
@@ -811,7 +811,7 @@ const RecruiterDashboard: React.FC = () => {
                     value={manualCandidate.email}
                     onChange={(e) => setManualCandidate({...manualCandidate, email: e.target.value})}
                     className="w-full p-3 bg-geek-gray border border-geek-border rounded-lg focus:ring-2 focus:ring-geek-blue/20 focus:border-geek-blue focus:outline-none transition-all"
-                    placeholder="joao@email.com"
+                    placeholder="john@email.com"
                   />
                  </div>
               </div>
@@ -819,11 +819,11 @@ const RecruiterDashboard: React.FC = () => {
                {/* Manual Preferences Section */}
                <div className="bg-gray-50 p-6 rounded-xl border border-geek-border">
                   <h4 className="text-sm font-bold text-geek-dark uppercase mb-4 flex items-center gap-2">
-                     <ListChecks className="w-4 h-4 text-geek-blue"/> Preferências do Candidato
+                     <ListChecks className="w-4 h-4 text-geek-blue"/> Candidate Preferences
                   </h4>
                   <div className="space-y-4">
                      <div>
-                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Pretensão Salarial (Obrigatório)</label>
+                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Salary Expectation (Mandatory)</label>
                         <div className="relative">
                             <span className="absolute left-3 top-3 text-geek-text font-bold text-xs">R$</span>
                             <input 
@@ -836,9 +836,9 @@ const RecruiterDashboard: React.FC = () => {
                         </div>
                      </div>
                      <div>
-                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Modelos Aceitos</label>
+                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Work Models Accepted</label>
                         <div className="flex flex-wrap gap-2">
-                            {['Presencial', 'Híbrido', 'Remoto'].map(option => (
+                            {['On-site', 'Hybrid', 'Remote'].map(option => (
                                 <button
                                     key={option}
                                     onClick={() => toggleManualSelection('workModels', option)}
@@ -854,9 +854,9 @@ const RecruiterDashboard: React.FC = () => {
                         </div>
                      </div>
                      <div>
-                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Contratos Aceitos</label>
+                        <label className="block text-xs font-bold text-geek-text uppercase mb-2">Contracts Accepted</label>
                         <div className="flex flex-wrap gap-2">
-                            {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
+                            {['Full-time', 'Contractor', 'Freelancer', 'Internship'].map(option => (
                                 <button
                                     key={option}
                                     onClick={() => toggleManualSelection('contractTypes', option)}
@@ -876,7 +876,7 @@ const RecruiterDashboard: React.FC = () => {
 
                {/* Upload Section */}
               <div>
-                <label className="block text-sm font-bold text-geek-dark mb-3">Upload do Currículo</label>
+                <label className="block text-sm font-bold text-geek-dark mb-3">Resume Upload</label>
                 {!manualCandidate.fileName ? (
                   <div 
                     onClick={() => fileInputRef.current?.click()}
@@ -885,8 +885,8 @@ const RecruiterDashboard: React.FC = () => {
                     <div className="bg-white p-4 rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
                        <UploadCloud className="w-8 h-8 text-geek-blue" />
                     </div>
-                    <p className="text-base text-geek-dark font-semibold">Clique para fazer upload</p>
-                    <p className="text-sm text-geek-text mt-1">PDF, DOCX ou TXT</p>
+                    <p className="text-base text-geek-dark font-semibold">Click to upload</p>
+                    <p className="text-sm text-geek-text mt-1">PDF, DOCX or TXT</p>
                     <input 
                       ref={fileInputRef}
                       type="file" 
@@ -903,7 +903,7 @@ const RecruiterDashboard: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-geek-dark">{manualCandidate.fileName}</p>
-                          <p className="text-xs text-geek-text">Pronto para análise</p>
+                          <p className="text-xs text-geek-text">Ready for analysis</p>
                         </div>
                      </div>
                      <button 
@@ -921,7 +921,7 @@ const RecruiterDashboard: React.FC = () => {
                   onClick={() => setIsAddingCandidate(false)}
                   className="px-6 py-2.5 text-geek-text bg-white border border-geek-border hover:bg-geek-gray rounded-lg font-semibold transition-colors"
                 >
-                  Cancelar
+                  Cancel
                 </button>
                 <button 
                   onClick={handleManualCandidateSubmit}
@@ -929,7 +929,7 @@ const RecruiterDashboard: React.FC = () => {
                   className="px-6 py-2.5 bg-geek-blue hover:bg-geek-blueHover text-white rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 shadow-soft"
                 >
                    {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                   Analisar Candidato
+                   Analyze Candidate
                 </button>
               </div>
             </div>
@@ -939,8 +939,8 @@ const RecruiterDashboard: React.FC = () => {
             <div className="bg-geek-gray p-6 rounded-full mb-6">
                <Filter className="w-10 h-10 text-geek-text opacity-50" />
             </div>
-            <h3 className="text-xl font-bold text-geek-dark">Nenhuma vaga selecionada</h3>
-            <p className="text-geek-text mt-2 max-w-sm">Selecione uma vaga no menu lateral para visualizar e gerenciar os candidatos ou crie uma nova oportunidade.</p>
+            <h3 className="text-xl font-bold text-geek-dark">No vacancy selected</h3>
+            <p className="text-geek-text mt-2 max-w-sm">Select a vacancy from the side menu to view and manage candidates or create a new opportunity.</p>
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-card border border-geek-border flex flex-col h-full min-h-[600px]">
@@ -950,10 +950,10 @@ const RecruiterDashboard: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                        <h1 className="text-2xl font-bold text-geek-dark">{selectedJob.title}</h1>
-                       <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded uppercase">Ativa</span>
+                       <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded uppercase">Active</span>
                        {selectedJob.interviewRequired && (
                          <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded uppercase flex items-center gap-1">
-                           <MessageSquare className="w-3 h-3"/> Entrevista Req.
+                           <MessageSquare className="w-3 h-3"/> Interview Req.
                          </span>
                        )}
                     </div>
@@ -969,18 +969,18 @@ const RecruiterDashboard: React.FC = () => {
                     {/* Details Snippet */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm bg-geek-gray/30 p-4 rounded-lg border border-geek-border">
                        <div>
-                          <h4 className="font-bold text-geek-dark mb-1 flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> Requisitos</h4>
+                          <h4 className="font-bold text-geek-dark mb-1 flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> Requirements</h4>
                           <ul className="list-disc pl-4 text-geek-text space-y-0.5">
                              {selectedJob.requirements.slice(0, 3).map((r, i) => <li key={i}>{r}</li>)}
-                             {selectedJob.requirements.length > 3 && <li>...e mais {selectedJob.requirements.length - 3}</li>}
+                             {selectedJob.requirements.length > 3 && <li>...and {selectedJob.requirements.length - 3} more</li>}
                           </ul>
                        </div>
                        {selectedJob.responsibilities && (
                         <div>
-                            <h4 className="font-bold text-geek-dark mb-1 flex items-center gap-1"><ListChecks className="w-3 h-3"/> Responsabilidades</h4>
+                            <h4 className="font-bold text-geek-dark mb-1 flex items-center gap-1"><ListChecks className="w-3 h-3"/> Responsibilities</h4>
                             <ul className="list-disc pl-4 text-geek-text space-y-0.5">
                               {selectedJob.responsibilities.slice(0, 3).map((r, i) => <li key={i}>{r}</li>)}
-                              {selectedJob.responsibilities.length > 3 && <li>...e mais {selectedJob.responsibilities.length - 3}</li>}
+                              {selectedJob.responsibilities.length > 3 && <li>...and {selectedJob.responsibilities.length - 3} more</li>}
                             </ul>
                         </div>
                        )}
@@ -993,7 +993,7 @@ const RecruiterDashboard: React.FC = () => {
                       className="flex items-center justify-center gap-2 bg-white border border-geek-border hover:bg-geek-gray text-geek-dark px-4 py-2.5 rounded-lg font-semibold transition-colors shadow-sm"
                     >
                       <Plus className="w-4 h-4" />
-                      Add Candidato
+                      Add Candidate
                     </button>
                     <button 
                       onClick={simulateBatchProcessing}
@@ -1001,7 +1001,7 @@ const RecruiterDashboard: React.FC = () => {
                       className="flex items-center justify-center gap-2 bg-geek-dark hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 shadow-soft"
                     >
                       {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <Users className="w-4 h-4" />}
-                      {loading ? "Processando..." : "Simular Processo"}
+                      {loading ? "Processing..." : "Simulate Process"}
                     </button>
                   </div>
                </div>
@@ -1015,7 +1015,7 @@ const RecruiterDashboard: React.FC = () => {
                    type="text" 
                    value={filterTerm}
                    onChange={(e) => setFilterTerm(e.target.value)}
-                   placeholder="Filtrar por nome ou email..." 
+                   placeholder="Filter by name or email..." 
                    className="w-full pl-9 pr-4 py-2 bg-white border border-geek-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-geek-blue transition-all"
                  />
                </div>
@@ -1027,10 +1027,10 @@ const RecruiterDashboard: React.FC = () => {
                    onChange={(e) => setFilterStatus(e.target.value)}
                    className="py-2 pl-3 pr-8 bg-white border border-geek-border rounded-lg text-sm text-geek-dark focus:outline-none focus:ring-1 focus:ring-geek-blue cursor-pointer"
                  >
-                   <option value="all">Todas as Classificações</option>
-                   <option value="Alta Prioridade">Alta Prioridade</option>
-                   <option value="Considerar">Considerar</option>
-                   <option value="Baixa Prioridade">Baixa Prioridade</option>
+                   <option value="all">All Classifications</option>
+                   <option value="High Priority">High Priority</option>
+                   <option value="Consider">Consider</option>
+                   <option value="Low Priority">Low Priority</option>
                  </select>
                </div>
             </div>
@@ -1042,23 +1042,23 @@ const RecruiterDashboard: React.FC = () => {
                    <div className="bg-geek-blue/10 p-4 rounded-full mb-4">
                      <Loader2 className="w-10 h-10 text-geek-blue animate-spin" />
                    </div>
-                   <h3 className="text-lg font-bold text-geek-dark">Processando Candidatos...</h3>
-                   <p className="text-geek-text text-sm mt-1">Nossa IA está analisando cada perfil.</p>
+                   <h3 className="text-lg font-bold text-geek-dark">Processing Candidates...</h3>
+                   <p className="text-geek-text text-sm mt-1">Our AI is analyzing each profile.</p>
                 </div>
               )}
 
               {candidates.length === 0 && !loading ? (
                 <div className="h-full flex flex-col items-center justify-center p-12 text-center">
                    <Users className="w-16 h-16 text-geek-gray mb-4" />
-                   <h3 className="text-lg font-bold text-geek-dark">Ainda não há candidatos</h3>
-                   <p className="text-geek-text mt-2">Comece adicionando candidatos manualmente ou simulando o processo.</p>
+                   <h3 className="text-lg font-bold text-geek-dark">No candidates yet</h3>
+                   <p className="text-geek-text mt-2">Start by adding candidates manually or simulating the process.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-100">
                     <thead className="bg-geek-gray">
                       <tr>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Candidato</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Candidate</th>
                         <th 
                           scope="col" 
                           onClick={toggleSort}
@@ -1072,18 +1072,18 @@ const RecruiterDashboard: React.FC = () => {
                             }
                           </div>
                         </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Técnico</th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Fit Cultural</th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Score Entrevista</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Tech Fit</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Cultural Fit</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Interview Score</th>
                         <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-geek-text uppercase tracking-wider">Status</th>
-                        <th scope="col" className="relative px-6 py-4"><span className="sr-only">Ações</span></th>
+                        <th scope="col" className="relative px-6 py-4"><span className="sr-only">Actions</span></th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
                       {filteredAndSortedCandidates.length === 0 ? (
                         <tr>
                           <td colSpan={7} className="px-6 py-8 text-center text-geek-text text-sm">
-                            Nenhum candidato encontrado com os filtros atuais.
+                            No candidates found with current filters.
                           </td>
                         </tr>
                       ) : (
@@ -1127,7 +1127,7 @@ const RecruiterDashboard: React.FC = () => {
                               <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
                                 <div className="flex flex-col gap-1 w-28">
                                     <div className="flex justify-between text-xs font-medium text-geek-text">
-                                      <span>Técnico</span>
+                                      <span>Tech</span>
                                       <span>{candidate.analysis?.technicalFit}%</span>
                                     </div>
                                     <div className="w-full bg-geek-border rounded-full h-1.5">
@@ -1155,7 +1155,7 @@ const RecruiterDashboard: React.FC = () => {
                                         <span className="text-xs text-geek-text">/ 100</span>
                                     </div>
                                 ) : (
-                                    <span className="text-xs text-gray-400 italic">Pendente</span>
+                                    <span className="text-xs text-gray-400 italic">Pending</span>
                                 )}
                               </td>
                               <td className="px-6 py-5 whitespace-nowrap">

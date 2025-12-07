@@ -39,11 +39,11 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
     setHasStarted(true);
     try {
       // Empty message to trigger the greeting based on system instruction
-      const response = await runInterviewTurn("Olá, estou pronto para começar a entrevista.", [], job, resumeText);
+      const response = await runInterviewTurn("Hello, I'm ready to start the interview.", [], job, resumeText);
       setMessages([{ role: 'model', text: response }]);
       setTurnCount(1);
     } catch (error) {
-      setMessages([{ role: 'model', text: "Erro ao iniciar a entrevista. Tente novamente." }]);
+      setMessages([{ role: 'model', text: "Error starting interview. Please try again." }]);
     } finally {
       setLoading(false);
     }
@@ -109,8 +109,8 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                <Mic2 className="w-6 h-6 text-geek-blue" />
              </div>
              <div>
-               <h3 className="font-bold text-lg">Simulador de Entrevista</h3>
-               <p className="text-sm text-gray-300">Vaga: {job.title}</p>
+               <h3 className="font-bold text-lg">Interview Simulator</h3>
+               <p className="text-sm text-gray-300">Role: {job.title}</p>
              </div>
           </div>
           <button onClick={() => onClose()} className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg">
@@ -126,9 +126,9 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                  <Bot className="w-16 h-16 text-geek-blue" />
                </div>
                <div>
-                 <h2 className="text-2xl font-bold text-geek-dark">Pronto para praticar?</h2>
+                 <h2 className="text-2xl font-bold text-geek-dark">Ready to practice?</h2>
                  <p className="text-geek-text max-w-md mx-auto mt-2">
-                   A IA fará <strong>5 perguntas</strong> baseadas na vaga e no seu currículo. Ao final, você receberá uma nota e feedback instantâneos que serão anexados à sua candidatura.
+                   The AI will ask <strong>5 questions</strong> based on the job and your resume. At the end, you will receive an instant score and feedback which will be attached to your application.
                  </p>
                </div>
                <button 
@@ -137,7 +137,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                  className="bg-geek-blue hover:bg-geek-blueHover text-white px-8 py-3 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
                >
                  {loading ? <Loader2 className="animate-spin w-5 h-5"/> : <PlayCircle className="w-5 h-5" />}
-                 Iniciar Simulação
+                 Start Simulation
                </button>
             </div>
           ) : finalResult ? (
@@ -146,7 +146,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Award className="w-10 h-10 text-green-600" />
                    </div>
-                   <h2 className="text-2xl font-bold text-geek-dark mb-2">Entrevista Concluída!</h2>
+                   <h2 className="text-2xl font-bold text-geek-dark mb-2">Interview Completed!</h2>
                    <div className="flex items-center justify-center gap-2 mb-6">
                       <span className="text-4xl font-bold text-geek-blue">{finalResult.score}</span>
                       <span className="text-geek-text text-sm self-end mb-1">/ 100</span>
@@ -160,7 +160,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                      onClick={handleClose}
                      className="w-full bg-geek-blue hover:bg-geek-blueHover text-white py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-2"
                    >
-                     <CheckCircle2 className="w-5 h-5" /> Salvar Resultado e Sair
+                     <CheckCircle2 className="w-5 h-5" /> Save Result & Exit
                    </button>
                 </div>
              </div>
@@ -168,15 +168,15 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
             <div className="h-full flex flex-col items-center justify-center">
                  <div className="bg-white p-6 rounded-2xl shadow-soft border border-geek-border flex flex-col items-center">
                     <Loader2 className="w-10 h-10 text-geek-blue animate-spin mb-4" />
-                    <h3 className="font-bold text-lg text-geek-dark">Calculando Resultado...</h3>
-                    <p className="text-sm text-geek-text">A IA está analisando suas respostas.</p>
+                    <h3 className="font-bold text-lg text-geek-dark">Calculating Results...</h3>
+                    <p className="text-sm text-geek-text">AI is analyzing your answers.</p>
                  </div>
             </div>
           ) : (
             <div className="space-y-6 pb-20">
               <div className="flex justify-center sticky top-0 z-10">
                  <span className="bg-geek-dark text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                   Pergunta {turnCount} de 5
+                   Question {turnCount} of 5
                  </span>
               </div>
               {messages.map((msg, idx) => (
@@ -200,7 +200,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                    </div>
                    <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-geek-border flex items-center gap-2">
                       <Loader2 className="w-4 h-4 text-geek-blue animate-spin" />
-                      <span className="text-xs text-geek-text font-medium">O recrutador está digitando...</span>
+                      <span className="text-xs text-geek-text font-medium">Recruiter is typing...</span>
                    </div>
                 </div>
               )}
@@ -218,7 +218,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                  value={inputValue}
                  onChange={(e) => setInputValue(e.target.value)}
                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                 placeholder={turnCount >= 5 ? "Simulação encerrada, aguarde..." : "Digite sua resposta..."}
+                 placeholder={turnCount >= 5 ? "Simulation ended, please wait..." : "Type your answer..."}
                  className="flex-1 bg-geek-gray border-transparent focus:bg-white border focus:border-geek-blue rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-geek-blue/20 transition-all"
                  disabled={loading || turnCount >= 5}
                />
@@ -232,7 +232,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
              </div>
              <div className="text-center mt-2">
                 <button onClick={() => onClose()} className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center justify-center gap-1 mx-auto">
-                   <StopCircle className="w-3 h-3" /> Cancelar Simulação
+                   <StopCircle className="w-3 h-3" /> Cancel Simulation
                 </button>
              </div>
           </div>

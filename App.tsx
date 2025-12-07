@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { UserRole } from './types';
 import RecruiterDashboard from './views/RecruiterDashboard';
@@ -32,7 +33,7 @@ const App: React.FC = () => {
               }`}
             >
               <Briefcase className="w-4 h-4" />
-              Para Empresas
+              For Recruiters
             </button>
             <button
               onClick={() => setRole(UserRole.CANDIDATE)}
@@ -43,7 +44,7 @@ const App: React.FC = () => {
               }`}
             >
               <UserCircle className="w-4 h-4" />
-              Para Talentos
+              For Talents
             </button>
           </div>
         </div>

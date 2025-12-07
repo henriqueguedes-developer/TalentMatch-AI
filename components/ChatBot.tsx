@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Loader2, Minimize2 } from 'lucide-react';
 import { sendChatMessage } from '../services/geminiService';
@@ -10,7 +11,7 @@ interface ChatMessage {
 const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Olá! Sou a IA do TalentMatch. Como posso ajudar você hoje?' }
+    { role: 'model', text: 'Hello! I am the TalentMatch AI. How can I help you today?' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,7 @@ const ChatBot: React.FC = () => {
       
       setMessages(prev => [...prev, { role: 'model', text: responseText }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', text: 'Desculpe, tive um problema ao conectar com o servidor.' }]);
+      setMessages(prev => [...prev, { role: 'model', text: 'Sorry, I had trouble connecting to the server.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +113,7 @@ const ChatBot: React.FC = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Digite sua pergunta..."
+                placeholder="Type your question..."
                 className="w-full pl-4 pr-12 py-3 bg-geek-gray border border-transparent rounded-xl text-sm focus:outline-none focus:bg-white focus:border-geek-blue focus:ring-1 focus:ring-geek-blue transition-all"
               />
               <button 

@@ -7,16 +7,16 @@ export interface Job {
     city: string;
     state: string;
   };
-  type: string[]; // Ex: ['Presencial', 'Híbrido']
-  contractType: string[]; // Ex: ['CLT', 'PJ']
+  type: string[]; // Ex: ['On-site', 'Hybrid']
+  contractType: string[]; // Ex: ['Full-time', 'Contractor']
   description: string;
-  requirements: string[]; // Requisitos Obrigatórios
-  responsibilities?: string[]; // Responsabilidades
-  differentials?: string[]; // Diferenciais / Desejáveis
-  softSkills?: string[]; // Perfil Comportamental
-  schedule?: string; // Horário de Trabalho
-  salaryRange: string; // Faixa Salarial (Obrigatório)
-  interviewRequired?: boolean; // Se a empresa exige/aceita entrevista simulada
+  requirements: string[]; // Mandatory Requirements
+  responsibilities?: string[]; // Responsibilities
+  differentials?: string[]; // Nice to have
+  softSkills?: string[]; // Behavioral Profile
+  schedule?: string; // Work Schedule
+  salaryRange: string; // Salary Range (Mandatory)
+  interviewRequired?: boolean; // If company requires/accepts simulated interview
 }
 
 export interface AnalysisResult {
@@ -27,7 +27,7 @@ export interface AnalysisResult {
   strengths: string[];
   weaknesses: string[];
   improvementTips: string[];
-  recommendation: 'Alta Prioridade' | 'Considerar' | 'Baixa Prioridade';
+  recommendation: 'High Priority' | 'Consider' | 'Low Priority';
 }
 
 export interface AnalysisHistoryItem {
@@ -37,10 +37,10 @@ export interface AnalysisHistoryItem {
 }
 
 export interface CandidatePreferences {
-  workModels: string[]; // O que o candidato aceita
-  contractTypes: string[]; // O que o candidato aceita
-  salaryExpectation: string; // Pretensão Salarial (Obrigatório)
-  locationPreference?: string; // Ex: "Aceito mudar de estado" ou "Apenas local"
+  workModels: string[]; // What candidate accepts
+  contractTypes: string[]; // What candidate accepts
+  salaryExpectation: string; // Salary Expectation (Mandatory)
+  locationPreference?: string; // Ex: "Willing to relocate"
 }
 
 export interface InterviewResult {
@@ -57,8 +57,8 @@ export interface Candidate {
   analysis?: AnalysisResult;
   history?: AnalysisHistoryItem[];
   jobId?: string;
-  preferences?: CandidatePreferences; // Novas preferências
-  interviewResult?: InterviewResult; // Resultado da entrevista simulada
+  preferences?: CandidatePreferences; // New preferences
+  interviewResult?: InterviewResult; // Simulated interview result
 }
 
 export enum UserRole {

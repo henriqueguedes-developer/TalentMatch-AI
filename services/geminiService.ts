@@ -14,39 +14,39 @@ const analysisSchema: Schema = {
   properties: {
     overallScore: {
       type: Type.NUMBER,
-      description: "Uma pontuação de 0 a 100 indicando a aderência geral à vaga.",
+      description: "A score from 0 to 100 indicating general adherence to the vacancy.",
     },
     technicalFit: {
       type: Type.NUMBER,
-      description: "Pontuação de 0 a 100 baseada apenas nas habilidades técnicas e experiência.",
+      description: "Score from 0 to 100 based solely on technical skills and experience.",
     },
     culturalFit: {
       type: Type.NUMBER,
-      description: "Pontuação de 0 a 100 baseada em soft skills e perfil comportamental inferido.",
+      description: "Score from 0 to 100 based on soft skills and inferred behavioral profile.",
     },
     summary: {
       type: Type.STRING,
-      description: "Um resumo executivo curto (máx 2 parágrafos) da análise.",
+      description: "A short executive summary (max 2 paragraphs) of the analysis in English.",
     },
     strengths: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
-      description: "Lista de 3 a 5 pontos fortes do candidato em relação à vaga.",
+      description: "List of 3 to 5 strengths of the candidate regarding the vacancy in English.",
     },
     weaknesses: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
-      description: "Lista de 3 a 5 pontos de atenção ou gaps de competência.",
+      description: "List of 3 to 5 points of attention or competence gaps in English.",
     },
     improvementTips: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
-      description: "Lista de 3 ações práticas, cursos ou projetos específicos que o candidato deve realizar para melhorar sua pontuação para esta vaga.",
+      description: "List of 3 practical actions, courses, or specific projects the candidate should undertake to improve their score for this vacancy in English.",
     },
     recommendation: {
       type: Type.STRING,
-      enum: ["Alta Prioridade", "Considerar", "Baixa Prioridade"],
-      description: "Classificação final para o recrutador.",
+      enum: ["High Priority", "Consider", "Low Priority"],
+      description: "Final classification for the recruiter.",
     },
   },
   required: ["overallScore", "technicalFit", "culturalFit", "summary", "strengths", "weaknesses", "improvementTips", "recommendation"],
@@ -57,11 +57,11 @@ const interviewEvalSchema: Schema = {
   properties: {
     score: {
       type: Type.NUMBER,
-      description: "Pontuação de 0 a 100 do desempenho do candidato na entrevista.",
+      description: "Score from 0 to 100 on the candidate's interview performance.",
     },
     feedback: {
       type: Type.STRING,
-      description: "Um feedback conciso (max 3 linhas) explicando a nota, destacando pontos positivos e o que faltou.",
+      description: "A concise feedback (max 3 lines) explaining the grade, highlighting positives and what was missing, in English.",
     },
   },
   required: ["score", "feedback"],
@@ -101,7 +101,7 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
             }
           },
           {
-            text: "Extract all text content from this document. Return only the raw text content without any markdown formatting. If it is a resume, organize the sections clearly."
+            text: "Extract all text content from this document. Return only the raw text content without any markdown formatting. If it is a resume, organize the sections clearly. Return text in English if possible, or keep original if it is a proper name/specific term."
           }
         ]
       }
@@ -110,7 +110,7 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
     return response.text || "";
   } catch (error) {
     console.error("Text extraction error:", error);
-    throw new Error("Falha ao ler o arquivo. Certifique-se que é um PDF ou Imagem válido e tente novamente.");
+    throw new Error("Failed to read file. Ensure it is a valid PDF or Image and try again.");
   }
 };
 
@@ -128,58 +128,58 @@ export const analyzeResume = async (
   let preferencesContext = "";
   if (preferences) {
     preferencesContext = `
-    PREFERÊNCIAS OBRIGATÓRIAS DO CANDIDATO (FATORES CRÍTICOS):
-    - Pretensão Salarial: R$ ${preferences.salaryExpectation}
-    - Budget da Vaga: ${job.salaryRange}
-    - Modelos Aceitos pelo Candidato: ${preferences.workModels.join(', ')}
-    - Modelo da Vaga: ${job.type.join(', ')}
-    - Contratos Aceitos: ${preferences.contractTypes.join(', ')}
+    CANDIDATE MANDATORY PREFERENCES (CRITICAL FACTORS):
+    - Salary Expectation: ${preferences.salaryExpectation}
+    - Job Budget: ${job.salaryRange}
+    - Work Models Accepted by Candidate: ${preferences.workModels.join(', ')}
+    - Job Model: ${job.type.join(', ')}
+    - Contracts Accepted: ${preferences.contractTypes.join(', ')}
 
-    REGRA RÍGIDA DE PONTUAÇÃO (MATCH FINANCEIRO E ESTRUTURAL):
-    1. MATCH SALARIAL: Compare o valor numérico da pretensão salarial com o budget da vaga.
-       - Se a pretensão for maior que o limite superior da vaga em mais de 10%: SUBTRAIA IMEDIATAMENTE 20 PONTOS do 'overallScore' e adicione "Incompatibilidade Salarial" em 'weaknesses'.
-       - Se a pretensão for muito acima (>30%), classifique automaticamente como "Baixa Prioridade".
+    STRICT SCORING RULES (FINANCIAL AND STRUCTURAL MATCH):
+    1. SALARY MATCH: Compare the numerical value of salary expectation with the vacancy budget.
+       - If expectation is > 10% above upper limit: IMMEDIATELY SUBTRACT 20 POINTS from 'overallScore' and add "Salary Incompatibility" to 'weaknesses'.
+       - If expectation is way above (>30%), automatically classify as "Low Priority".
     
-    2. MATCH DE MODELO E CONTRATO:
-       - Se não houver interseção entre os Modelos de Trabalho (ex: Candidato só aceita Remoto e vaga é 100% Presencial), o 'overallScore' NÃO DEVE PASSAR DE 40. Classifique como "Baixa Prioridade" e cite "Incompatibilidade de Modelo de Trabalho".
+    2. MODEL AND CONTRACT MATCH:
+       - If there is no intersection between Work Models (e.g., Candidate only Remote vs Job 100% On-site), 'overallScore' MUST NOT EXCEED 40. Classify as "Low Priority" and cite "Work Model Incompatibility".
     `;
   }
 
   const prompt = `
-    Você é um especialista em Recrutamento e Seleção utilizando Inteligência Artificial.
+    You are an expert in Recruitment and Selection using Artificial Intelligence.
     
-    Sua tarefa é analisar a aderência de um candidato a uma vaga específica.
+    Your task is to analyze the adherence of a candidate to a specific vacancy.
     
-    VAGA:
-    Título: ${job.title}
-    Departamento: ${job.department}
-    Localização: ${job.location.city} / ${job.location.state}
-    Descrição Geral: ${job.description}
-    Responsabilidades: ${job.responsibilities?.join("; ") || "Não especificado"}
-    Requisitos Obrigatórios: ${job.requirements.join("; ")}
-    Diferenciais (Desejável): ${job.differentials?.join("; ") || "Nenhum"}
-    Soft Skills (Comportamental): ${job.softSkills?.join("; ") || "Não especificado"}
-    Faixa Salarial Oferecida: ${job.salaryRange}
-    Modelo de Trabalho da Vaga: ${job.type.join(', ')}
-    Contrato da Vaga: ${job.contractType.join(', ')}
+    VACANCY:
+    Title: ${job.title}
+    Department: ${job.department}
+    Location: ${job.location.city} / ${job.location.state}
+    General Description: ${job.description}
+    Responsibilities: ${job.responsibilities?.join("; ") || "Not specified"}
+    Mandatory Requirements: ${job.requirements.join("; ")}
+    Differentials (Nice to have): ${job.differentials?.join("; ") || "None"}
+    Soft Skills (Behavioral): ${job.softSkills?.join("; ") || "Not specified"}
+    Salary Range Offered: ${job.salaryRange}
+    Job Work Model: ${job.type.join(', ')}
+    Job Contract: ${job.contractType.join(', ')}
 
     ${preferencesContext}
 
-    CANDIDATO (Texto do Currículo):
+    CANDIDATE (Resume Text):
     ${resumeText}
 
-    CRITÉRIOS DE PONTUAÇÃO (Pesos Sugeridos):
-    - 35%: Hard Skills e Requisitos Obrigatórios.
-    - 25%: Experiência Profissional relevante.
-    - 30%: Compatibilidade (Salário, Localização, Modelo de Trabalho) - SEJA RIGOROSO AQUI.
-    - 10%: Soft Skills e Cultura.
+    SCORING CRITERIA (Suggested Weights):
+    - 35%: Hard Skills and Mandatory Requirements.
+    - 25%: Relevant Professional Experience.
+    - 30%: Compatibility (Salary, Location, Work Model) - BE STRICT HERE.
+    - 10%: Soft Skills and Culture.
 
-    Analise profundamente a experiência, habilidades técnicas, soft skills e o contexto da carreira do candidato em relação à vaga.
+    Analyze deeply the experience, technical skills, soft skills, and career context of the candidate regarding the vacancy.
     
-    IMPORTANTE:
-    No campo 'improvementTips', aja como um mentor de carreira. Dê conselhos extremamente práticos e acionáveis sobre o que falta para ele chegar a 100% de aderência. Cite tecnologias específicas, metodologias ou tipos de projetos que ele precisa adicionar ao portfólio.
+    IMPORTANT:
+    In the 'improvementTips' field, act as a career mentor. Give extremely practical and actionable advice on what is missing for them to reach 100% adherence. Cite specific technologies, methodologies, or project types they need to add to their portfolio.
     
-    Retorne a resposta estritamente no formato JSON solicitado.
+    Return the response strictly in the requested JSON format, IN ENGLISH.
   `;
 
   try {
@@ -219,7 +219,7 @@ const matchSchema: Schema = {
     properties: {
       jobId: { type: Type.STRING },
       matchScore: { type: Type.NUMBER },
-      reason: { type: Type.STRING, description: "Uma frase curta explicando o motivo da pontuação." }
+      reason: { type: Type.STRING, description: "A short sentence explaining the score reason in English." }
     },
     required: ["jobId", "matchScore", "reason"]
   }
@@ -241,15 +241,16 @@ export const findBestMatches = async (resumeText: string, jobs: Job[]): Promise<
   }));
 
   const prompt = `
-    Atue como um recrutador sênior.
-    Analise o seguinte currículo:
+    Act as a senior recruiter.
+    Analyze the following resume:
     "${resumeText.substring(0, 5000)}"
 
-    Compare este currículo com a lista de vagas abaixo.
-    Para cada vaga, atribua uma pontuação de match (0-100) baseada na aderência técnica e experiência.
-    Retorne APENAS as vagas com matchScore > 40.
+    Compare this resume with the list of vacancies below.
+    For each vacancy, assign a match score (0-100) based on technical adherence and experience.
+    Return ONLY vacancies with matchScore > 40.
+    Provide the 'reason' in English.
     
-    Lista de Vagas:
+    Vacancy List:
     ${JSON.stringify(jobsSummary)}
   `;
 
@@ -287,12 +288,12 @@ export const sendChatMessage = async (message: string, history: {role: 'user' | 
     history: history,
     config: {
       temperature: 0.7,
-      systemInstruction: "Você é o assistente virtual da TalentMatch AI. Ajude candidatos a melhorarem seus currículos e recrutadores a encontrarem os melhores talentos. Seja conciso, profissional e amigável."
+      systemInstruction: "You are TalentMatch AI's virtual assistant. Help candidates improve their resumes and recruiters find the best talent. Be concise, professional, and friendly. Answer in English."
     }
   });
 
   const result = await chat.sendMessage({ message });
-  return result.text || "Desculpe, não consegui processar sua resposta.";
+  return result.text || "Sorry, I could not process your request.";
 };
 
 // Interview Simulator Function
@@ -308,30 +309,31 @@ export const runInterviewTurn = async (
   const ai = new GoogleGenAI({ apiKey });
 
   const systemInstruction = `
-    Você é Alex, um Recrutador Técnico Sênior experiente na empresa TalentMatch.
-    Você está entrevistando um candidato para a vaga de: ${jobContext.title} (${jobContext.department}).
+    You are Alex, an experienced Senior Technical Recruiter at TalentMatch.
+    You are interviewing a candidate for the position of: ${jobContext.title} (${jobContext.department}).
     
-    CONTEXTO DA VAGA:
+    VACANCY CONTEXT:
     ${jobContext.description}
-    Responsabilidades: ${jobContext.responsibilities?.join("; ") || "Não especificado"}
-    Requisitos Obrigatórios: ${jobContext.requirements.join('; ')}
-    Diferenciais: ${jobContext.differentials?.join("; ") || "Nenhum"}
-    Soft Skills: ${jobContext.softSkills?.join("; ") || "Não especificado"}
+    Responsibilities: ${jobContext.responsibilities?.join("; ") || "Not specified"}
+    Mandatory Requirements: ${jobContext.requirements.join('; ')}
+    Differentials: ${jobContext.differentials?.join("; ") || "None"}
+    Soft Skills: ${jobContext.softSkills?.join("; ") || "Not specified"}
 
-    RESUMO DO CANDIDATO:
+    CANDIDATE SUMMARY:
     ${resumeContext.substring(0, 2000)}
 
-    SUA MISSÃO:
-    Conduzir uma simulação de entrevista realista e curta (máximo 5 perguntas no total).
+    YOUR MISSION:
+    Conduct a realistic and short simulation interview (max 5 questions total).
     
-    REGRAS DE INTERAÇÃO:
-    1. Faça APENAS UMA pergunta por vez. Nunca faça várias perguntas na mesma mensagem.
-    2. Comece se apresentando como Alex e fazendo a primeira pergunta (técnica ou comportamental).
-    3. Quando o candidato responder, dê um feedback CURTO e CONSTRUTIVO sobre a resposta dele (ex: "Boa resposta, mostrou conhecimento em X", ou "Poderia ter sido mais específico sobre Y").
-    4. Logo após o feedback, faça a próxima pergunta.
-    5. Aumente a dificuldade gradualmente.
-    6. Tente explorar tanto os Requisitos quanto os Diferenciais se o candidato demonstrar conhecimento.
-    7. Mantenha um tom profissional, mas encorajador.
+    INTERACTION RULES:
+    1. Ask ONLY ONE question at a time. Never ask multiple questions in the same message.
+    2. Start by introducing yourself as Alex and asking the first question (technical or behavioral).
+    3. When the candidate answers, give SHORT and CONSTRUCTIVE feedback on their answer (e.g., "Good answer, showed knowledge in X", or "Could have been more specific about Y").
+    4. Immediately after the feedback, ask the next question.
+    5. Increase difficulty gradually.
+    6. Try to explore both Requirements and Differentials if the candidate demonstrates knowledge.
+    7. Maintain a professional but encouraging tone.
+    8. SPEAK IN ENGLISH.
   `;
   
   try {
@@ -345,10 +347,10 @@ export const runInterviewTurn = async (
     });
 
     const result = await chat.sendMessage({ message });
-    return result.text || "Erro na simulação.";
+    return result.text || "Simulation error.";
   } catch (e: any) {
      console.error("Interview error", e);
-     return `Erro ao processar entrevista: ${e.message}`;
+     return `Error processing interview: ${e.message}`;
   }
 };
 
@@ -365,22 +367,22 @@ export const evaluateInterview = async (
     const transcript = history.map(msg => `${msg.role.toUpperCase()}: ${msg.parts[0].text}`).join('\n');
 
     const prompt = `
-      Você é um avaliador de entrevistas técnicas.
+      You are a technical interview evaluator.
       
-      Analise a transcrição da entrevista abaixo para a vaga de "${jobContext.title}".
-      O candidato respondeu a perguntas feitas por um recrutador de IA.
+      Analyze the interview transcript below for the vacancy "${jobContext.title}".
+      The candidate answered questions asked by an AI recruiter.
       
-      TRANSCRICAO:
+      TRANSCRIPT:
       ${transcript}
       
-      Avalie o candidato com base em:
-      1. Clareza e comunicação.
-      2. Profundidade técnica nas respostas (se houve perguntas técnicas).
-      3. Comportamento e profissionalismo.
+      Evaluate the candidate based on:
+      1. Clarity and communication.
+      2. Technical depth in answers (if there were technical questions).
+      3. Behavior and professionalism.
       
-      Retorne um JSON com:
-      - score: Nota de 0 a 100.
-      - feedback: Um resumo curto justificando a nota.
+      Return a JSON with:
+      - score: Grade from 0 to 100.
+      - feedback: A short summary justifying the grade in English.
     `;
 
     try {
@@ -399,6 +401,6 @@ export const evaluateInterview = async (
         return JSON.parse(cleanJson(jsonText)) as InterviewResult;
     } catch (error) {
         console.error("Evaluation error", error);
-        return { score: 0, feedback: "Erro ao avaliar entrevista." };
+        return { score: 0, feedback: "Error evaluating interview." };
     }
 }

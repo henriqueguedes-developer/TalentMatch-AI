@@ -44,7 +44,7 @@ const CandidatePortal: React.FC = () => {
 
     setFileName(file.name);
     setLoading(true);
-    setLoadingMessage("Lendo documento via IA...");
+    setLoadingMessage("Reading document via AI...");
     setErrorMsg('');
 
     try {
@@ -63,7 +63,7 @@ const CandidatePortal: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setErrorMsg("Não foi possível ler o arquivo. Tente colar o texto manualmente ou use outro formato.");
+      setErrorMsg("Could not read file. Try pasting text manually or use another format.");
       setLoading(false);
     }
   };
@@ -72,14 +72,14 @@ const CandidatePortal: React.FC = () => {
     if (!resumeText) return;
     
     setLoading(true);
-    setLoadingMessage(`Analisando compatibilidade com ${jobs.length} vagas...`);
+    setLoadingMessage(`Analyzing compatibility with ${jobs.length} vacancies...`);
     
     try {
       const results = await findBestMatches(resumeText, jobs);
       setMatches(results);
       setStep('results');
     } catch (error) {
-      alert("Erro ao buscar vagas. Tente novamente.");
+      alert("Error finding vacancies. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -93,14 +93,14 @@ const CandidatePortal: React.FC = () => {
     setApplicationSuccess(false); // Reset app status
     setInterviewResult(null); // Reset previous interview
     setLoading(true);
-    setLoadingMessage(`Calculando aderência para ${job.title}...`);
+    setLoadingMessage(`Calculating adherence for ${job.title}...`);
 
     try {
       const analysis = await analyzeResume(job, resumeText);
       setAnalysisResult(analysis);
       setStep('detail');
     } catch (error) {
-      alert("Erro na análise detalhada.");
+      alert("Error in detailed analysis.");
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ const CandidatePortal: React.FC = () => {
   const handlePreApply = () => {
     // Double check logic for security, though UI is disabled
     if (selectedJob?.interviewRequired && !interviewResult) {
-        alert("Esta vaga exige a realização da entrevista simulada.");
+        alert("This vacancy requires completing the simulated interview.");
         return;
     }
     setStep('preferences');
@@ -141,9 +141,9 @@ const CandidatePortal: React.FC = () => {
     setTimeout(() => {
       const newCandidate: Candidate = {
         id: `app-${Date.now()}`,
-        name: fileName ? fileName.split('.')[0] : 'Candidato (Portal)',
-        email: 'candidato@portal.com',
-        fileName: fileName || 'curriculo.pdf',
+        name: fileName ? fileName.split('.')[0] : 'Candidate (Portal)',
+        email: 'candidate@portal.com',
+        fileName: fileName || 'resume.pdf',
         resumeText: resumeText,
         analysis: analysisResult,
         jobId: selectedJob.id,
@@ -172,7 +172,7 @@ const CandidatePortal: React.FC = () => {
        const file = e.dataTransfer.files[0];
        setFileName(file.name);
        setLoading(true);
-       setLoadingMessage("Lendo documento via IA...");
+       setLoadingMessage("Reading document via AI...");
        setErrorMsg('');
        
        try {
@@ -189,7 +189,7 @@ const CandidatePortal: React.FC = () => {
            setLoading(false);
         }
        } catch (err) {
-         setErrorMsg("Erro na leitura do arquivo.");
+         setErrorMsg("Error reading file.");
          setLoading(false);
        }
     }
@@ -219,7 +219,7 @@ const CandidatePortal: React.FC = () => {
            <Loader2 className="w-8 h-8 text-geek-blue animate-spin" />
         </div>
         <h3 className="text-xl font-bold text-geek-dark">{loadingMessage}</h3>
-        <p className="text-geek-text mt-2 font-medium">Nossa IA está lendo seu documento...</p>
+        <p className="text-geek-text mt-2 font-medium">Our AI is reading your document...</p>
       </div>
     );
   }
@@ -235,10 +235,10 @@ const CandidatePortal: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-16 animate-in fade-in duration-500">
           <div className="text-center mb-12 max-w-2xl">
             <h1 className="text-4xl md:text-5xl font-bold text-geek-dark mb-6 tracking-tight">
-              Descubra seu <span className="text-geek-blue">potencial</span> real
+              Discover your real <span className="text-geek-blue">potential</span>
             </h1>
             <p className="text-lg text-geek-text leading-relaxed">
-              Faça upload do seu currículo e deixe nossa Inteligência Artificial analisar suas competências contra as melhores oportunidades do mercado.
+              Upload your resume and let our Artificial Intelligence analyze your skills against the best market opportunities.
             </p>
           </div>
 
@@ -260,8 +260,8 @@ const CandidatePortal: React.FC = () => {
                     <UploadCloud className="w-12 h-12 text-geek-blue" />
                   </div>
                   <div className="text-center">
-                    <p className="font-bold text-xl text-geek-dark">Arraste seu CV ou clique aqui</p>
-                    <p className="text-sm text-geek-text mt-2 font-medium">Suportamos PDF, DOCX, Imagens ou TXT</p>
+                    <p className="font-bold text-xl text-geek-dark">Drag your CV or click here</p>
+                    <p className="text-sm text-geek-text mt-2 font-medium">We support PDF, DOCX, Images or TXT</p>
                   </div>
                   <input 
                     ref={fileInputRef}
@@ -281,7 +281,7 @@ const CandidatePortal: React.FC = () => {
                           <div>
                             <p className="font-bold text-geek-dark text-lg">{fileName}</p>
                             <p className="text-sm text-green-600 font-bold flex items-center gap-1.5 mt-1">
-                              <CheckCircle2 className="w-4 h-4" /> Leitura Concluída
+                              <CheckCircle2 className="w-4 h-4" /> Reading Completed
                             </p>
                           </div>
                        </div>
@@ -296,14 +296,14 @@ const CandidatePortal: React.FC = () => {
                     <div className="bg-geek-gray rounded-xl p-1 mb-8 border border-geek-border">
                        <div className="flex items-center justify-between px-3 py-2">
                           <label className="text-xs font-bold text-geek-dark uppercase flex items-center gap-1.5">
-                            <Edit2 className="w-3 h-3 text-geek-blue"/> Conteúdo Extraído (Editável)
+                            <Edit2 className="w-3 h-3 text-geek-blue"/> Extracted Content (Editable)
                           </label>
                        </div>
                        <textarea 
                           value={resumeText}
                           onChange={(e) => setResumeText(e.target.value)}
                           className="w-full h-48 p-4 text-sm bg-white border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-geek-blue/20 text-geek-dark font-mono resize-none leading-relaxed"
-                          placeholder="Cole o texto do seu currículo aqui..."
+                          placeholder="Paste your resume text here..."
                        />
                     </div>
 
@@ -312,7 +312,7 @@ const CandidatePortal: React.FC = () => {
                       className="w-full bg-geek-blue hover:bg-geek-blueHover text-white font-bold py-4 px-6 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-1 flex items-center justify-center gap-3 text-lg"
                     >
                       <Search className="w-6 h-6" />
-                      Encontrar Minhas Vagas
+                      Find My Vacancies
                     </button>
                 </div>
              )}
@@ -321,18 +321,18 @@ const CandidatePortal: React.FC = () => {
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center max-w-5xl">
              <div className="p-6 bg-white rounded-2xl border border-geek-border shadow-card">
                 <div className="bg-geek-gray w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-geek-dark font-bold">1</div>
-                <h3 className="font-bold text-geek-dark mb-2 text-lg">Upload Inteligente</h3>
-                <p className="text-sm text-geek-text leading-relaxed">Nossa IA lê PDFs e imagens instantaneamente. Não precisa redigitar nada.</p>
+                <h3 className="font-bold text-geek-dark mb-2 text-lg">Smart Upload</h3>
+                <p className="text-sm text-geek-text leading-relaxed">Our AI reads PDFs and images instantly. No need to retype anything.</p>
              </div>
              <div className="p-6 bg-white rounded-2xl border border-geek-border shadow-card">
                 <div className="bg-geek-gray w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-geek-dark font-bold">2</div>
-                <h3 className="font-bold text-geek-dark mb-2 text-lg">IA TalentMatch</h3>
-                <p className="text-sm text-geek-text leading-relaxed">Tecnologia avançada cruza suas skills com as melhores oportunidades.</p>
+                <h3 className="font-bold text-geek-dark mb-2 text-lg">TalentMatch AI</h3>
+                <p className="text-sm text-geek-text leading-relaxed">Advanced technology matches your skills with the best opportunities.</p>
              </div>
              <div className="p-6 bg-white rounded-2xl border border-geek-border shadow-card">
                 <div className="bg-geek-gray w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-geek-dark font-bold">3</div>
-                <h3 className="font-bold text-geek-dark mb-2 text-lg">Feedback Real</h3>
-                <p className="text-sm text-geek-text leading-relaxed">Receba um ranking de aderência e dicas para evoluir sua carreira.</p>
+                <h3 className="font-bold text-geek-dark mb-2 text-lg">Real Feedback</h3>
+                <p className="text-sm text-geek-text leading-relaxed">Receive an adherence ranking and tips to evolve your career.</p>
              </div>
           </div>
         </div>
@@ -343,14 +343,14 @@ const CandidatePortal: React.FC = () => {
         <div className="animate-in fade-in slide-in-from-right-8 duration-500">
            <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-geek-dark">Vagas Compatíveis</h2>
-                <p className="text-geek-text mt-1">Encontramos as seguintes oportunidades para <span className="font-semibold text-geek-dark">{fileName}</span></p>
+                <h2 className="text-3xl font-bold text-geek-dark">Compatible Vacancies</h2>
+                <p className="text-geek-text mt-1">We found the following opportunities for <span className="font-semibold text-geek-dark">{fileName}</span></p>
               </div>
               <button 
                 onClick={resetProcess}
                 className="text-sm font-semibold text-geek-text hover:text-geek-blue border border-geek-border bg-white px-5 py-2.5 rounded-lg hover:border-geek-blue transition-colors shadow-sm"
               >
-                Analisar outro perfil
+                Analyze another profile
               </button>
            </div>
 
@@ -359,11 +359,11 @@ const CandidatePortal: React.FC = () => {
                 <div className="bg-geek-gray w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Briefcase className="w-10 h-10 text-geek-text" />
                 </div>
-                <h3 className="text-2xl font-bold text-geek-dark">Nenhuma vaga encontrada</h3>
+                <h3 className="text-2xl font-bold text-geek-dark">No vacancies found</h3>
                 <p className="text-geek-text mt-3 max-w-md mx-auto leading-relaxed">
-                  Não encontramos vagas com match acima de 40% no momento. Tente detalhar mais suas experiências no currículo.
+                  We didn't find vacancies with match above 40% at the moment. Try detailing your experiences more in the resume.
                 </p>
-                <button onClick={resetProcess} className="mt-8 px-6 py-3 bg-geek-blue text-white rounded-xl font-bold hover:bg-geek-blueHover transition-colors">Tentar novamente</button>
+                <button onClick={resetProcess} className="mt-8 px-6 py-3 bg-geek-blue text-white rounded-xl font-bold hover:bg-geek-blueHover transition-colors">Try again</button>
              </div>
            ) : (
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -378,7 +378,7 @@ const CandidatePortal: React.FC = () => {
                     >
                       {idx === 0 && match.matchScore > 80 && (
                         <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-4 py-1.5 rounded-bl-xl shadow-sm z-10 tracking-wider">
-                           RECOMENDADO
+                           RECOMMENDED
                         </div>
                       )}
 
@@ -410,7 +410,7 @@ const CandidatePortal: React.FC = () => {
                           onClick={() => handleViewDetail(job.id)}
                           className="w-full py-3 rounded-xl bg-geek-blue text-white font-bold hover:bg-geek-blueHover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                         >
-                          Ver Detalhes e Aplicar <ArrowRight className="w-4 h-4" />
+                          View Details & Apply <ArrowRight className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -428,18 +428,18 @@ const CandidatePortal: React.FC = () => {
             onClick={() => setStep('detail')}
             className="mb-8 flex items-center gap-2 text-geek-text hover:text-geek-blue transition-colors font-bold text-sm bg-white px-4 py-2 rounded-lg border border-geek-border shadow-sm w-fit"
           >
-            <ChevronLeft className="w-4 h-4" /> Voltar
+            <ChevronLeft className="w-4 h-4" /> Back
           </button>
           
           <div className="bg-white rounded-2xl shadow-card border border-geek-border p-8">
-              <h2 className="text-2xl font-bold text-geek-dark mb-2">Preferências de Trabalho</h2>
-              <p className="text-geek-text mb-8">Para finalizar sua candidatura na vaga de <strong>{selectedJob.title}</strong>, selecione o que se encaixa no seu perfil.</p>
+              <h2 className="text-2xl font-bold text-geek-dark mb-2">Work Preferences</h2>
+              <p className="text-geek-text mb-8">To finalize your application for <strong>{selectedJob.title}</strong>, select what fits your profile.</p>
 
               <div className="space-y-6">
                  <div>
-                    <label className="block font-bold text-geek-dark mb-3">Quais modelos de trabalho você aceita?</label>
+                    <label className="block font-bold text-geek-dark mb-3">Which work models do you accept?</label>
                     <div className="flex flex-wrap gap-3">
-                        {['Presencial', 'Híbrido', 'Remoto'].map(option => (
+                        {['On-site', 'Hybrid', 'Remote'].map(option => (
                             <button
                                 key={option}
                                 onClick={() => togglePreference('workModels', option)}
@@ -453,17 +453,17 @@ const CandidatePortal: React.FC = () => {
                             </button>
                         ))}
                     </div>
-                    {preferences.workModels.includes('Presencial') && selectedJob.location.state !== 'Remoto' && (
+                    {preferences.workModels.includes('On-site') && selectedJob.location.state !== 'Remote' && (
                          <div className="mt-2 text-xs bg-blue-50 text-blue-800 p-2 rounded">
-                            <span className="font-bold">Nota:</span> Esta vaga é em {selectedJob.location.city}/{selectedJob.location.state}. Certifique-se de que a localização é viável para você.
+                            <span className="font-bold">Note:</span> This vacancy is in {selectedJob.location.city}/{selectedJob.location.state}. Ensure the location is feasible for you.
                          </div>
                     )}
                  </div>
 
                  <div>
-                    <label className="block font-bold text-geek-dark mb-3">Quais tipos de contrato você aceita?</label>
+                    <label className="block font-bold text-geek-dark mb-3">Which contract types do you accept?</label>
                     <div className="flex flex-wrap gap-3">
-                        {['CLT', 'PJ', 'Cooperado', 'Estágio'].map(option => (
+                        {['Full-time', 'Contractor', 'Freelancer', 'Internship'].map(option => (
                             <button
                                 key={option}
                                 onClick={() => togglePreference('contractTypes', option)}
@@ -480,7 +480,7 @@ const CandidatePortal: React.FC = () => {
                  </div>
 
                  <div>
-                    <label className="block font-bold text-geek-dark mb-3">Pretensão Salarial (Mensal)</label>
+                    <label className="block font-bold text-geek-dark mb-3">Salary Expectation (Monthly)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-3.5 text-geek-text font-bold flex items-center gap-1">
                         <DollarSign className="w-4 h-4" /> R$
@@ -503,11 +503,11 @@ const CandidatePortal: React.FC = () => {
               >
                 {isApplying ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" /> Enviando...
+                      <Loader2 className="w-5 h-5 animate-spin" /> Sending...
                     </>
                 ) : (
                     <>
-                      Confirmar Candidatura <Send className="w-5 h-5" />
+                      Confirm Application <Send className="w-5 h-5" />
                     </>
                 )}
               </button>
@@ -522,7 +522,7 @@ const CandidatePortal: React.FC = () => {
             onClick={() => setStep('results')}
             className="mb-8 flex items-center gap-2 text-geek-text hover:text-geek-blue transition-colors font-bold text-sm bg-white px-4 py-2 rounded-lg border border-geek-border shadow-sm w-fit"
           >
-            <ChevronLeft className="w-4 h-4" /> Voltar para resultados
+            <ChevronLeft className="w-4 h-4" /> Back to results
           </button>
 
           {/* Success Application Message */}
@@ -531,9 +531,9 @@ const CandidatePortal: React.FC = () => {
                 <div className="bg-green-100 p-4 rounded-full mb-4 ring-4 ring-green-50">
                    <CheckCircle2 className="w-10 h-10 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-green-800">Candidatura Enviada!</h3>
+                <h3 className="text-2xl font-bold text-green-800">Application Sent!</h3>
                 <p className="text-green-700 mt-2 max-w-lg font-medium">
-                   Seu perfil foi enviado com sucesso para a vaga de {selectedJob.title}. Boa sorte!
+                   Your profile was successfully sent for the position of {selectedJob.title}. Good luck!
                 </p>
              </div>
           )}
@@ -578,17 +578,17 @@ const CandidatePortal: React.FC = () => {
                      >
                         {interviewResult ? (
                            <>
-                              <CheckCircle2 className="w-5 h-5" /> Entrevista Realizada ({interviewResult.score}/100)
+                              <CheckCircle2 className="w-5 h-5" /> Interview Completed ({interviewResult.score}/100)
                            </>
                         ) : (
                            <>
                               <Mic2 className="w-5 h-5" /> 
-                              {isInterviewMissing ? "Realizar Entrevista Obrigatória" : "Simular Entrevista"}
+                              {isInterviewMissing ? "Perform Mandatory Interview" : "Simulate Interview"}
                            </>
                         )}
                      </button>
                      {isInterviewMissing && (
-                         <span className="text-xs text-orange-600 font-bold mt-2">Necessário para aplicar</span>
+                         <span className="text-xs text-orange-600 font-bold mt-2">Required to apply</span>
                      )}
                   </div>
 
@@ -602,7 +602,7 @@ const CandidatePortal: React.FC = () => {
                     }`}
                   >
                      {isInterviewMissing ? <Lock className="w-5 h-5" /> : null}
-                     Candidatar-se <ArrowRight className="w-5 h-5" />
+                     Apply Now <ArrowRight className="w-5 h-5" />
                   </button>
                </>
              ) : (
@@ -610,7 +610,7 @@ const CandidatePortal: React.FC = () => {
                   disabled
                   className="bg-geek-gray text-geek-text border border-geek-border px-8 py-3 rounded-xl font-bold cursor-default flex items-center gap-2"
                >
-                  Já Inscrito
+                  Applied
                </button>
              )}
           </div>

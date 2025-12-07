@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AnalysisResult } from '../types';
 import MatchGauge from './MatchGauge';
@@ -14,13 +15,13 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ result }) => {
       <div className="p-8 border-b border-geek-border">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-geek-dark mb-4">Resumo da Análise</h3>
+            <h3 className="text-xl font-bold text-geek-dark mb-4">Analysis Summary</h3>
             <p className="text-geek-text text-base leading-relaxed mb-6">{result.summary}</p>
             
             <div className="flex items-center gap-4">
                <span className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${
-                 result.recommendation === 'Alta Prioridade' ? 'bg-green-50 text-green-700 border-green-200' :
-                 result.recommendation === 'Considerar' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                 result.recommendation === 'High Priority' ? 'bg-green-50 text-green-700 border-green-200' :
+                 result.recommendation === 'Consider' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                  'bg-red-50 text-red-700 border-red-200'
                }`}>
                  {result.recommendation.toUpperCase()}
@@ -29,7 +30,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ result }) => {
           </div>
           
           <div className="flex-shrink-0">
-             <MatchGauge score={result.overallScore} label="Aderência" size={180} />
+             <MatchGauge score={result.overallScore} label="Adherence" size={180} />
           </div>
         </div>
       </div>
@@ -43,7 +44,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ result }) => {
                   <div className="bg-geek-blue/10 p-2 rounded-lg">
                     <Briefcase className="w-5 h-5 text-geek-blue" />
                   </div>
-                  <h4 className="font-bold text-geek-dark text-lg">Fit Técnico</h4>
+                  <h4 className="font-bold text-geek-dark text-lg">Technical Fit</h4>
               </div>
               <span className="font-bold text-2xl text-geek-dark">{result.technicalFit}%</span>
            </div>
@@ -53,7 +54,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ result }) => {
            </div>
 
            <h5 className="text-sm font-bold text-green-700 mb-4 flex items-center gap-2 uppercase tracking-wide">
-             <CheckCircle className="w-4 h-4" /> Pontos Fortes
+             <CheckCircle className="w-4 h-4" /> Strengths
            </h5>
            <ul className="space-y-3">
              {result.strengths.map((s, i) => (
@@ -69,7 +70,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ result }) => {
                   <div className="bg-purple-100 p-2 rounded-lg">
                      <Users className="w-5 h-5 text-purple-600" />
                   </div>
-                  <h4 className="font-bold text-geek-dark text-lg">Fit Cultural</h4>
+                  <h4 className="font-bold text-geek-dark text-lg">Cultural Fit</h4>
               </div>
               <span className="font-bold text-2xl text-geek-dark">{result.culturalFit}%</span>
            </div>
@@ -79,7 +80,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ result }) => {
            </div>
 
            <h5 className="text-sm font-bold text-amber-600 mb-4 flex items-center gap-2 uppercase tracking-wide">
-             <AlertTriangle className="w-4 h-4" /> Pontos de Atenção
+             <AlertTriangle className="w-4 h-4" /> Areas for Improvement
            </h5>
            <ul className="space-y-3">
              {result.weaknesses.map((w, i) => (
@@ -97,8 +98,8 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ result }) => {
                 <Lightbulb className="w-6 h-6 text-yellow-300" />
               </div>
               <div>
-                <h4 className="font-bold text-xl">Plano de Evolução Profissional</h4>
-                <p className="text-gray-300 text-sm">Dicas personalizadas para alcançar 100% de aderência</p>
+                <h4 className="font-bold text-xl">Professional Development Plan</h4>
+                <p className="text-gray-300 text-sm">Customized tips to reach 100% adherence</p>
               </div>
            </div>
            
