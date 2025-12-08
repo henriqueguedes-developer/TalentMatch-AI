@@ -445,7 +445,7 @@ const RecruiterDashboard: React.FC = () => {
                                <div className="text-right">
                                   <p className="text-xs text-geek-text">Expectation</p>
                                   <p className="font-bold text-geek-dark">R$ {modalCandidate.preferences.salaryExpectation}</p>
-                               </div>
+                                </div>
                                <div className="text-gray-300">vs</div>
                                <div>
                                   <p className="text-xs text-geek-text">Job Budget</p>
@@ -681,7 +681,7 @@ const RecruiterDashboard: React.FC = () => {
                             />
                             <span className="text-sm font-bold text-blue-900">Require AI Simulated Interview</span>
                          </label>
-                         <p className="text-xs text-blue-700 mt-1 pl-6">Candidates will be encouraged to answer 5 technical questions.</p>
+                         <p className="text-xs text-blue-700 mt-1 pl-6">Candidates will be encouraged to answer 3 technical questions.</p>
                       </div>
                    </div>
                 </div>

@@ -72,9 +72,67 @@ const cleanJson = (text: string) => {
   return text.replace(/```json/g, '').replace(/```/g, '').trim();
 };
 
+// Helper to extract wait time from error message
+const parseRetryDelay = (errorMessage: string): number | null => {
+  const match = errorMessage.match(/retry in (\d+(\.\d+)?)s/);
+  if (match && match[1]) {
+    // Add 1000ms buffer to be safe
+    return Math.ceil(parseFloat(match[1]) * 1000) + 1000;
+  }
+  return null;
+};
+
+// Retry Helper Function
+async function callWithRetry<T>(fn: () => Promise<T>, retries = 3, defaultDelay = 2000): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: any) {
+    const errorMsg = error.message || JSON.stringify(error);
+    
+    const isQuotaError = error.status === 429 || 
+                         error.code === 429 || 
+                         errorMsg.includes('429') ||
+                         errorMsg.includes('Quota exceeded') ||
+                         errorMsg.includes('RESOURCE_EXHAUSTED');
+
+    if (isQuotaError && retries > 0) {
+      // Try to parse specific delay from API message, otherwise use exponential backoff
+      const apiDelay = parseRetryDelay(errorMsg);
+      const delay = apiDelay || defaultDelay;
+      
+      console.warn(`Quota limit hit. Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // If we used a specific API delay, don't double it next time, just respect the API again
+      const nextDelay = apiDelay ? 2000 : defaultDelay * 2;
+      return callWithRetry(fn, retries - 1, nextDelay);
+    }
+    throw error;
+  }
+}
+
+// Helper to check MIME types based on extension if browser fails
+const getMimeType = (file: File): string => {
+  if (file.type) return file.type;
+  
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'txt') return 'text/plain';
+  
+  return 'application/octet-stream';
+}
+
 export const extractTextFromFile = async (file: File): Promise<string> => {
   if (!apiKey) throw new Error("API Key not found.");
   const ai = new GoogleGenAI({ apiKey });
+
+  // Validate type before processing
+  const mimeType = getMimeType(file);
+  if (mimeType !== 'application/pdf' && !mimeType.startsWith('image/') && mimeType !== 'text/plain') {
+     throw new Error("Unsupported file format. Please upload PDF, TXT or Image.");
+  }
 
   // Convert File to Base64
   const base64Data = await new Promise<string>((resolve, reject) => {
@@ -89,29 +147,32 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
     reader.readAsDataURL(file);
   });
 
-  try {
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              mimeType: file.type,
-              data: base64Data
+  return callWithRetry(async () => {
+    try {
+      const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Data
+              }
+            },
+            {
+              text: "Extract all text content from this document. Return only the raw text content without any markdown formatting. If it is a resume, organize the sections clearly. Return text in English if possible, or keep original if it is a proper name/specific term."
             }
-          },
-          {
-            text: "Extract all text content from this document. Return only the raw text content without any markdown formatting. If it is a resume, organize the sections clearly. Return text in English if possible, or keep original if it is a proper name/specific term."
-          }
-        ]
-      }
-    });
+          ]
+        }
+      });
 
-    return response.text || "";
-  } catch (error) {
-    console.error("Text extraction error:", error);
-    throw new Error("Failed to read file. Ensure it is a valid PDF or Image and try again.");
-  }
+      return response.text || "";
+    } catch (error) {
+      console.error("Text extraction error:", error);
+      // IMPORTANT: Re-throw error so callWithRetry can handle 429s
+      throw error; 
+    }
+  }, 5); // Increased retries for file extraction
 };
 
 export const analyzeResume = async (
@@ -182,27 +243,29 @@ export const analyzeResume = async (
     Return the response strictly in the requested JSON format, IN ENGLISH.
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: analysisSchema,
-        temperature: 0.2, 
-      },
-    });
+  return callWithRetry(async () => {
+    try {
+      const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: analysisSchema,
+          temperature: 0.2, 
+        },
+      });
 
-    const jsonText = response.text;
-    if (!jsonText) {
-      throw new Error("No response from AI");
+      const jsonText = response.text;
+      if (!jsonText) {
+        throw new Error("No response from AI");
+      }
+
+      return JSON.parse(cleanJson(jsonText)) as AnalysisResult;
+    } catch (error) {
+      console.error("Error analysing resume:", error);
+      throw error;
     }
-
-    return JSON.parse(cleanJson(jsonText)) as AnalysisResult;
-  } catch (error) {
-    console.error("Error analysing resume:", error);
-    throw error;
-  }
+  });
 };
 
 // Interface for batch matching results
@@ -254,27 +317,29 @@ export const findBestMatches = async (resumeText: string, jobs: Job[]): Promise<
     ${JSON.stringify(jobsSummary)}
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: matchSchema,
-        temperature: 0.1
-      }
-    });
+  return callWithRetry(async () => {
+    try {
+      const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: matchSchema,
+          temperature: 0.1
+        }
+      });
 
-    const jsonText = response.text;
-    if (!jsonText) return [];
-    
-    let results = JSON.parse(cleanJson(jsonText)) as JobMatch[];
-    // Ensure sorting
-    return results.sort((a, b) => b.matchScore - a.matchScore);
-  } catch (error) {
-    console.error("Error finding matches:", error);
-    return [];
-  }
+      const jsonText = response.text;
+      if (!jsonText) return [];
+      
+      let results = JSON.parse(cleanJson(jsonText)) as JobMatch[];
+      // Ensure sorting
+      return results.sort((a, b) => b.matchScore - a.matchScore);
+    } catch (error) {
+      console.error("Error finding matches:", error);
+      return [];
+    }
+  });
 };
 
 export const sendChatMessage = async (message: string, history: {role: 'user' | 'model', parts: {text: string}[]}[]): Promise<string> => {
@@ -283,17 +348,19 @@ export const sendChatMessage = async (message: string, history: {role: 'user' | 
   }
   const ai = new GoogleGenAI({ apiKey });
   
-  const chat = ai.chats.create({
-    model: CHAT_MODEL_NAME,
-    history: history,
-    config: {
-      temperature: 0.7,
-      systemInstruction: "You are TalentMatch AI's virtual assistant. Help candidates improve their resumes and recruiters find the best talent. Be concise, professional, and friendly. Answer in English."
-    }
-  });
+  return callWithRetry(async () => {
+    const chat = ai.chats.create({
+      model: CHAT_MODEL_NAME,
+      history: history,
+      config: {
+        temperature: 0.7,
+        systemInstruction: "You are TalentMatch AI's virtual assistant. Help candidates improve their resumes and recruiters find the best talent. Be concise, professional, and friendly. Answer in English."
+      }
+    });
 
-  const result = await chat.sendMessage({ message });
-  return result.text || "Sorry, I could not process your request.";
+    const result = await chat.sendMessage({ message });
+    return result.text || "Sorry, I could not process your request.";
+  });
 };
 
 // Interview Simulator Function
@@ -323,7 +390,7 @@ export const runInterviewTurn = async (
     ${resumeContext.substring(0, 2000)}
 
     YOUR MISSION:
-    Conduct a realistic and short simulation interview (max 5 questions total).
+    Conduct a realistic and short simulation interview (max 3 questions total).
     
     INTERACTION RULES:
     1. Ask ONLY ONE question at a time. Never ask multiple questions in the same message.
@@ -336,22 +403,24 @@ export const runInterviewTurn = async (
     8. SPEAK IN ENGLISH.
   `;
   
-  try {
-    const chat = ai.chats.create({
-      model: CHAT_MODEL_NAME,
-      history: history,
-      config: {
-        temperature: 0.6,
-        systemInstruction: systemInstruction
-      }
-    });
+  return callWithRetry(async () => {
+    try {
+      const chat = ai.chats.create({
+        model: CHAT_MODEL_NAME,
+        history: history,
+        config: {
+          temperature: 0.6,
+          systemInstruction: systemInstruction
+        }
+      });
 
-    const result = await chat.sendMessage({ message });
-    return result.text || "Simulation error.";
-  } catch (e: any) {
-     console.error("Interview error", e);
-     return `Error processing interview: ${e.message}`;
-  }
+      const result = await chat.sendMessage({ message });
+      return result.text || "Simulation error.";
+    } catch (e: any) {
+       console.error("Interview error", e);
+       throw e; // re-throw to trigger retry
+    }
+  });
 };
 
 export const evaluateInterview = async (
@@ -385,22 +454,24 @@ export const evaluateInterview = async (
       - feedback: A short summary justifying the grade in English.
     `;
 
-    try {
-        const response = await ai.models.generateContent({
-            model: MODEL_NAME,
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: interviewEvalSchema
-            }
-        });
-        
-        const jsonText = response.text;
-        if (!jsonText) throw new Error("No response");
-        
-        return JSON.parse(cleanJson(jsonText)) as InterviewResult;
-    } catch (error) {
-        console.error("Evaluation error", error);
-        return { score: 0, feedback: "Error evaluating interview." };
-    }
+    return callWithRetry(async () => {
+      try {
+          const response = await ai.models.generateContent({
+              model: MODEL_NAME,
+              contents: prompt,
+              config: {
+                  responseMimeType: "application/json",
+                  responseSchema: interviewEvalSchema
+              }
+          });
+          
+          const jsonText = response.text;
+          if (!jsonText) throw new Error("No response");
+          
+          return JSON.parse(cleanJson(jsonText)) as InterviewResult;
+      } catch (error) {
+          console.error("Evaluation error", error);
+          throw error;
+      }
+    });
 }

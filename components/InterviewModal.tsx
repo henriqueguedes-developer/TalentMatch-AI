@@ -50,15 +50,15 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
   };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || loading || turnCount > 5) return;
+    if (!inputValue.trim() || loading || turnCount > 3) return;
 
     const userText = inputValue;
     setInputValue('');
     setMessages(prev => [...prev, { role: 'user', text: userText }]);
     setLoading(true);
 
-    // If we reached 5 turns, we stop asking questions and evaluate
-    if (turnCount >= 5) {
+    // If we reached 3 turns, we stop asking questions and evaluate
+    if (turnCount >= 3) {
         setIsEvaluating(true);
         try {
              // Add user last message to history for evaluation
@@ -128,7 +128,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                <div>
                  <h2 className="text-2xl font-bold text-geek-dark">Ready to practice?</h2>
                  <p className="text-geek-text max-w-md mx-auto mt-2">
-                   The AI will ask <strong>5 questions</strong> based on the job and your resume. At the end, you will receive an instant score and feedback which will be attached to your application.
+                   The AI will ask <strong>3 questions</strong> based on the job and your resume. At the end, you will receive an instant score and feedback which will be attached to your application.
                  </p>
                </div>
                <button 
@@ -160,7 +160,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                      onClick={handleClose}
                      className="w-full bg-geek-blue hover:bg-geek-blueHover text-white py-3 rounded-xl font-bold shadow-md flex items-center justify-center gap-2"
                    >
-                     <CheckCircle2 className="w-5 h-5" /> Save Result & Exit
+                     <CheckCircle2 className="w-5 h-5" /> Authorize Submission
                    </button>
                 </div>
              </div>
@@ -176,7 +176,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
             <div className="space-y-6 pb-20">
               <div className="flex justify-center sticky top-0 z-10">
                  <span className="bg-geek-dark text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                   Question {turnCount} of 5
+                   Question {turnCount} of 3
                  </span>
               </div>
               {messages.map((msg, idx) => (
@@ -218,13 +218,13 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ job, resumeText, onClos
                  value={inputValue}
                  onChange={(e) => setInputValue(e.target.value)}
                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                 placeholder={turnCount >= 5 ? "Simulation ended, please wait..." : "Type your answer..."}
+                 placeholder={turnCount >= 3 ? "Simulation ended, please wait..." : "Type your answer..."}
                  className="flex-1 bg-geek-gray border-transparent focus:bg-white border focus:border-geek-blue rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-geek-blue/20 transition-all"
-                 disabled={loading || turnCount >= 5}
+                 disabled={loading || turnCount > 3}
                />
                <button 
                  onClick={handleSendMessage}
-                 disabled={!inputValue.trim() || loading || turnCount >= 5}
+                 disabled={!inputValue.trim() || loading || turnCount > 3}
                  className="bg-geek-blue hover:bg-geek-blueHover text-white p-3 rounded-xl transition-colors disabled:opacity-50"
                >
                  <Send className="w-5 h-5" />

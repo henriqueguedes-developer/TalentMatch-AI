@@ -130,6 +130,8 @@ const CandidatePortal: React.FC = () => {
      setShowInterviewModal(false);
      if (result) {
          setInterviewResult(result);
+         // Automatically move to preferences (Authorization step)
+         setStep('preferences');
      }
   }
 
@@ -432,8 +434,8 @@ const CandidatePortal: React.FC = () => {
           </button>
           
           <div className="bg-white rounded-2xl shadow-card border border-geek-border p-8">
-              <h2 className="text-2xl font-bold text-geek-dark mb-2">Work Preferences</h2>
-              <p className="text-geek-text mb-8">To finalize your application for <strong>{selectedJob.title}</strong>, select what fits your profile.</p>
+              <h2 className="text-2xl font-bold text-geek-dark mb-2">Authorize Submission</h2>
+              <p className="text-geek-text mb-8">To finalize your application for <strong>{selectedJob.title}</strong>, please confirm your preferences and authorize the data submission.</p>
 
               <div className="space-y-6">
                  <div>
@@ -507,7 +509,7 @@ const CandidatePortal: React.FC = () => {
                     </>
                 ) : (
                     <>
-                      Confirm Application <Send className="w-5 h-5" />
+                      Confirm & Send <Send className="w-5 h-5" />
                     </>
                 )}
               </button>
